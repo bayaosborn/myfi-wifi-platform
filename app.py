@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify,request
+from flask import Flask, render_template, jsonify, request
 import qrcode
 import io
 import base64
@@ -38,10 +38,8 @@ def generate_qr():
     qr_b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
     return render_template('index.html', qr_image=qr_b64, ssid=SSID)
 
-# TEST ROUTE - verify database works
 @app.route('/test-db')
 def test_db():
-    # Create a test group
     test_group = Group(
         name="Test Group",
         group_code="TEST123",
@@ -57,13 +55,6 @@ def test_db():
         "groups": [{"id": g.id, "name": g.name, "code": g.group_code} for g in groups]
     })
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
-
-
-
-
 @app.route('/groups/join')
 def join_group_page():
     return render_template('join_group.html')
@@ -72,8 +63,7 @@ def join_group_page():
 def create_group():
     data = request.get_json()
     
-    # Calculate target based on first member
-    target = 400  # Default for 4 people, adjust logic later
+    target = 400
     
     new_group = Group(
         name=data['group_name'],
@@ -83,7 +73,6 @@ def create_group():
     db.session.add(new_group)
     db.session.commit()
     
-    # Add creator as first member
     member = Member(
         name=data['member_name'],
         phone=data['phone'],
@@ -119,8 +108,10 @@ def join_group():
         "group_id": group.id
     })
 
-
 @app.route('/groups')
 def groups_page():
     all_groups = Group.query.all()
     return render_template('groups.html', groups=all_groups)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)

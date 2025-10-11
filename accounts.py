@@ -1,9 +1,9 @@
 from flask import Blueprint, jsonify, request
-from models import Group, Member, Payment
+from models import db, Group, Member, Payment
 
 accounts_bp = Blueprint('accounts', __name__)
 
-def init_accounts(app, db):
+def init_accounts(app, db_instance):
     app.register_blueprint(accounts_bp)
 
 @accounts_bp.route('/accounts', methods=['GET'])

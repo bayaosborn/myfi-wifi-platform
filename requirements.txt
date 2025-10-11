@@ -1,6 +1,4 @@
 flask
+flask-sqlalchemy
 qrcode
 pillow
-flask
-pillow
-qrcode
