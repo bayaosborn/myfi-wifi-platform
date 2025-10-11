@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Groups - MyFi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #000;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      color: #0051ff;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .group-item {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .group-name {
+      color: #0051ff;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .group-info {
+      color: #666;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>All Groups</h1>
+    
+    {% if groups %}
+      {% for group in groups %}
+        <div class="group-item">
+          <div class="group-name">{{ group.name }}</div>
+          <div class="group-info">Code: {{ group.group_code }}</div>
+          <div class="group-info">Balance: {{ group.current_balance }} KSH / {{ group.target_amount }} KSH</div>
+          <div class="group-info">Status: {{ group.status }}</div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No groups yet.</p>
+    {% endif %}
+  </div>
+</body>
+</html>
