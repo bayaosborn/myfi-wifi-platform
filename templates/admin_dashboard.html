@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin Dashboard - MyFi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #000;
+      margin: 0;
+      padding: 0;
+    }
+    .admin-header {
+      background: #dc3545;
+      color: #fff;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .admin-header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .logout-btn {
+      background: #fff;
+      color: #dc3545;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .stat-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #0051ff;
+    }
+    .stat-label {
+      color: #666;
+      margin-top: 5px;
+    }
+    .section {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    h2 {
+      color: #0051ff;
+      border-bottom: 2px solid #0051ff;
+      padding-bottom: 10px;
+    }
+    .payment-item {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .payment-info {
+      flex: 1;
+    }
+    .payment-actions button {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 0 5px;
+      font-weight: bold;
+    }
+    .approve-btn {
+      background: #28a745;
+      color: #fff;
+    }
+    .reject-btn {
+      background: #dc3545;
+      color: #fff;
+    }
+    .group-item {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .group-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #0051ff;
+    }
+    .badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    .badge-pending {
+      background: #ffc107;
+      color: #000;
+    }
+    .badge-active {
+      background: #28a745;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-header">
+    <h1>🔒 Admin Dashboard</h1>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="container">
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="totalGroups">0</div>
+        <div class="stat-label">Total Groups</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="pendingPayments">0</div>
+        <div class="stat-label">Pending Payments</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="totalRevenue">0</div>
+        <div class="stat-label">Total Revenue (KSH)</div>
+
+
+<div class="stat-card">
+  <button onclick="runExpiry()" style="width: 100%; padding: 15px; background: #ffc107; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+    🔄 Check Expired Groups Now
+  </button>
+</div>
+        
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Pending Payments</h2>
+      <div id="pendingPaymentsList"></div>
+    </div>
+
+    <div class="section">
+      <h2>All Groups</h2>
+      <div id="groupsList"></div>
+    </div>
+  </div>
+
+  <script>
+    async function loadDashboard() {
+      const res = await fetch('/api/admin/dashboard');
+      const data = await res.json();
+      
+      // Update stats
+      document.getElementById('totalGroups').textContent = data.total_groups;
+      document.getElementById('pendingPayments').textContent = data.pending_payments;
+      document.getElementById('totalRevenue').textContent = data.total_revenue;
+      
+      // Pending payments
+      if (data.payments.length > 0) {
+        document.getElementById('pendingPaymentsList').innerHTML = data.payments.map(p => `
+          <div class="payment-item">
+            <div class="payment-info">
+              <strong>${p.member_name}</strong> - ${p.amount} KSH<br>
+              <small>Group: ${p.group_name} | M-Pesa: ${p.mpesa_code || 'N/A'}</small>
+            </div>
+            <div class="payment-actions">
+              <button class="approve-btn" onclick="verifyPayment(${p.id}, true)">✓ Approve</button>
+              <button class="reject-btn" onclick="verifyPayment(${p.id}, false)">✗ Reject</button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        document.getElementById('pendingPaymentsList').innerHTML = '<p style="color: #666;">No pending payments</p>';
+      }
+      
+      // Groups
+      document.getElementById('groupsList').innerHTML = data.groups.map(g => `
+        <div class="group-item">
+          <div class="group-name">
+            ${g.name}
+            <span class="badge ${g.status === 'active' ? 'badge-active' : 'badge-pending'}">
+              ${g.status.toUpperCase()}
+            </span>
+          </div>
+          <div style="margin: 10px 0; color: #666;">
+            Code: <strong>${g.group_code}</strong> | 
+            Members: ${g.member_count}/4 | 
+            Balance: ${g.current_balance}/${g.target_amount} KSH
+          </div>
+          <div style="font-size: 14px; color: #999;">
+            ${g.members.map(m => `${m.name} (${m.amount_contributed} KSH)`).join(', ')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+
+
+        async function runExpiry() {
+  if (!confirm('Manually check for expired groups?')) return;
+  
+  const res = await fetch('/api/admin/expire-groups', {method: 'POST'});
+  const data = await res.json();
+  alert(data.message);
+  loadDashboard();
+    }
+    
+    async function verifyPayment(paymentId, approve) {
+      const action = approve ? 'approve' : 'reject';
+      
+      const res = await fetch('/api/admin/verify-payment', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          payment_id: paymentId,
+          approve: approve
+        })
+      });
+      
+      const data = await res.json();
+      alert(data.message);
+      loadDashboard();  // Reload
+    }
+
+    function logout() {
+      fetch('/api/admin/logout', {method: 'POST'})
+        .then(() => window.location.href = '/admin');
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>

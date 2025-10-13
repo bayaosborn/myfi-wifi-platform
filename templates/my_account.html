@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Account - MyFi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #000;
+      margin: 0;
+      padding: 20px;
+    }
+    h1, h2 { color: #0051ff; }
+    h1 { text-align: center; font-size: 24px; }
+    h2 { font-size: 18px; margin-top: 20px; }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .group-card {
+      border: 2px solid #0051ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 25px;
+      background: #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #0051ff;
+      transition: width 0.3s;
+    }
+    .member-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .wifi-password {
+      background: #d4edda;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #0051ff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 8px 0;
+    }
+    button:hover { background: #0040cc; }
+    .btn-secondary {
+      background: #6c757d;
+    }
+    .btn-secondary:hover { background: #5a6268; }
+    .status { color: #666; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  {% include 'header.html' %}
+  
+  <div class="container">
+    <h1>My Account</h1>
+    <p style="text-align: center; color: #666;">Welcome, <strong id="username"></strong></p>
+
+    <div id="groupSection"></div>
+    <div id="actionsSection"></div>
+  </div>
+
+  <script>
+    async function loadAccount() {
+      const res = await fetch('/api/my-account');
+      const data = await res.json();
+      
+      document.getElementById('username').textContent = data.username;
+      
+      if (data.group) {
+        showGroup(data.group, data.members, data.my_contribution);
+      } else {
+        showNoGroup();
+      }
+    }
+
+
+
+function showGroup(group, members, myContribution) {
+  const percentage = (group.current_balance / group.target_amount) * 100;
+  const passwordRevealed = group.can_scan;
+  const isExpired = group.is_expired;
+  
+  document.getElementById('groupSection').innerHTML = `
+    <div class="group-card">
+      <h2>${group.name}</h2>
+      <p class="status">Code: ${group.group_code} | Expires: ${group.week_end}</p>
+      
+      ${isExpired ? `
+        <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; font-weight: bold;">
+          ⚠️ GROUP EXPIRED<br>
+          <small style="font-weight: normal;">This group's weekly access has ended. Join a new group to continue.</small>
+        </div>
+      ` : ''}
+      
+      ${passwordRevealed && !isExpired ? `
+        <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; font-weight: bold;">
+          ✅ PAYMENT COMPLETE!
+        </div>
+        <p style="text-align: center; margin: 20px 0;">
+          <button onclick="location.href='/'" style="width: 100%; padding: 15px 30px; font-size: 18px; background: #28a745; border: none; color: white; border-radius: 8px; cursor: pointer;">
+            📱 SCAN QR CODE TO CONNECT
+          </button>
+        </p>
+      ` : !isExpired ? `
+        <div style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
+          ⏳ Waiting for full payment
+        </div>
+      ` : ''}
+      
+      <p><strong>${group.current_balance} KSH</strong> / ${group.target_amount} KSH</p>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: ${percentage}%"></div>
+      </div>
+      
+      <h2>Members (${members.length}/4)</h2>
+      ${members.map(m => `
+        <div class="member-item">
+          ${m.name}: <strong>${m.amount_contributed} KSH</strong>
+        </div>
+      `).join('')}
+      
+      <p style="margin-top: 15px;">Your contribution: <strong>${myContribution} KSH</strong></p>
+    </div>
+  `;
+  
+  if (isExpired) {
+    document.getElementById('actionsSection').innerHTML = `
+      <button onclick="location.href='/groups'">Join New Group</button>
+      <button class="btn-secondary" onclick="leaveGroup()">Leave This Group</button>
+    `;
+  } else if (passwordRevealed) {
+    document.getElementById('actionsSection').innerHTML = `
+      <button onclick="location.href='/'">Go to Scan Page</button>
+      <button class="btn-secondary" onclick="leaveGroup()">Leave Group</button>
+    `;
+  } else {
+    document.getElementById('actionsSection').innerHTML = `
+      <button onclick="addPayment()">Add Payment</button>
+      <button class="btn-secondary" onclick="leaveGroup()">Leave Group</button>
+    `;
+  }
+    }
+
+
+
+
+async function leaveGroup() {
+  if (!confirm('Are you sure you want to leave this group? Your contributions will remain but you can join a new group.')) {
+    return;
+  }
+  
+  const res = await fetch('/api/leave-group', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'}
+  });
+  
+  const data = await res.json();
+  
+  if (res.ok) {
+    alert(data.message);
+    location.reload();  // Refresh page to show no group
+  } else {
+    alert('Error: ' + data.message);
+  }
+    }
+
+
+
+    
+    function showNoGroup() {
+      document.getElementById('groupSection').innerHTML = `
+        <p style="text-align: center; color: #666; margin: 30px 0;">You're not in a group yet.</p>
+      `;
+      
+      document.getElementById('actionsSection').innerHTML = `
+        <button onclick="location.href='/groups'">Browse Groups</button>
+        <button onclick="createGroup()">Create New Group</button>
+      `;
+    }
+
+    function addPayment() {
+      const amount = prompt('Enter amount (KSH):');
+      if (amount) {
+        location.href = '/add-payment';
+      }
+    }
+
+
+
+    function createGroup() {
+      location.href = '/create-group';
+    }
+
+    loadAccount();
+  </script>
+</body>
+</html>

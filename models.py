@@ -44,3 +44,14 @@ class WiFiCredential(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     valid_from = db.Column(db.DateTime, default=datetime.utcnow)
     valid_until = db.Column(db.DateTime)
+
+
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    member_id = db.Column(db.Integer, db.ForeignKey('member.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    member = db.relationship('Member', backref='user', uselist=False)

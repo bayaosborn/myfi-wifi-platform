@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>MyFi — Quick Connect</title>
+  <title>MyFi – Quick Connect</title>
 
   <style>
     body {
@@ -57,34 +57,74 @@
       background-color: #0040cc;
     }
 
-    .account-link {
-      font-size: 18px;
-      color: #000;
-      text-decoration: none;
-      font-weight: 600;
+    .scan-btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
     }
 
-    .account-link:hover {
+    .links {
+      margin-top: 20px;
+    }
+
+    .link {
+      font-size: 18px;
+      color: #0051ff;
+      text-decoration: none;
+      font-weight: 600;
+      margin: 0 15px;
+    }
+
+    .link:hover {
       text-decoration: underline;
+    }
+
+    .message {
+      color: #dc3545;
+      margin: 15px 0;
     }
   </style>
 </head>
 
 <body>
-  <div class="logo">myfi</div>
+  <div>    <img src="/static/logo.svg" alt="MyFi" width="65"></div>
+  <div class="logo">myfi
+  </div>
 
   <div class="qr-placeholder">
     {% if qr_image %}
       <img src="data:image/png;base64,{{ qr_image }}" alt="Wi-Fi QR Code">
     {% else %}
-      <!-- Empty placeholder before QR generation -->
+      <!-- Empty placeholder -->
     {% endif %}
   </div>
 
-  <form action="/generate_qr" method="post">
+  <form id="scanForm" action="/generate_qr" method="post">
     <button class="scan-btn" type="submit">Scan</button>
   </form>
 
-  <a href="/accounts" class="account-link">Account</a>
+  <div id="message" class="message"></div>
+
+  <div class="links">
+    <a href="/groups" class="link">Find Groups</a>
+    <a href="/login" class="link">Account</a>
+  </div>
+
+  <script>
+    document.getElementById('scanForm').onsubmit = async (e) => {
+      e.preventDefault();
+      
+      // Check if user has access
+      const res = await fetch('/api/check-access');
+      const data = await res.json();
+      
+      if (!data.has_access) {
+        document.getElementById('message').textContent = data.message;
+        return;
+      }
+      
+      // If access granted, submit form normally
+      e.target.submit();
+    };
+  </script>
 </body>
 </html>
