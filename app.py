@@ -11,7 +11,7 @@ from accounts import init_accounts
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
-
+from PIL import Image
 
 load_dotenv()
 
@@ -49,7 +49,6 @@ def login_required(f):
 
 # Admin password (change this!)
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
-print(ADMIN_PASSWORD)
 
 
 def admin_required(f):
@@ -75,10 +74,22 @@ with app.app_context():
     db.create_all()
     print("✅ Database tables created")
 
+
+
+
 # Network credentials
-SSID = os.getenv('SSID')
+
+
+#problem was in SSID I used I instead of l, my eyes don't see properly. Scanning issue should be fixed. 13/10/2025
+#SSID = os.getenv('SSID')
+
+
+SSID = 'poaA7rglU'
 PASSWORD = os.getenv('SSID_PASSWORD')
-SECURITY = os.getenv('SSID_SECURITY')
+#SECURITY = os.getenv('SSID_SECURITY')
+SECURITY='WPA2'
+
+
 
 # Global error handler
 @app.errorhandler(500)
@@ -90,6 +101,10 @@ def internal_error(error):
 def not_found(error):
     return jsonify({"error": "Page not found"}), 404
 
+
+
+
+
 # ===== ALL ROUTES =====
 
 @app.route('/')
@@ -99,7 +114,14 @@ def index():
 @app.route('/generate_qr', methods=['POST'])
 def generate_qr():
     try:
-        wifi_string = f"WIFI:T:{SECURITY};S:{SSID};P:{PASSWORD};;"
+
+        #there was a problem scanning the qr code, the field of codes and the Hidden flag were not present. 13/10/2025
+        #issue was not fields or flag, it was the SSID where I used I instead of l. I've also opted to add a logo at the centre of qr code 
+        
+        #generate string
+        wifi_string = f"WIFI:S:{SSID};T:{SECURITY};P:{PASSWORD};H:False;;"
+
+        
         img = qrcode.make(wifi_string)
         buf = io.BytesIO()
         img.save(buf, format="PNG")
