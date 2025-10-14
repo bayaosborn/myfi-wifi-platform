@@ -86,10 +86,10 @@ with app.app_context():
 #SSID = os.getenv('SSID')
 
 
-SSID = 'poaA7rglU'
+SSID = os.getenv('SSID_NAME')
 PASSWORD = os.getenv('SSID_PASSWORD')
-#SECURITY = os.getenv('SSID_SECURITY')
-SECURITY='WPA2'
+SECURITY = os.getenv('SSID_SECURITY')
+
 
 
 
