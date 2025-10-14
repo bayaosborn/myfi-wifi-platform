@@ -11,7 +11,8 @@ from accounts import init_accounts
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
-from PIL import Image
+from PIL import Image, ImageDraw   # <- ImageDraw import fixed
+#from PIL import Image
 
 load_dotenv()
 
@@ -62,10 +63,13 @@ def admin_required(f):
     return decorated_function
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///myfi.db'
+
+# Load database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
 
+# Initialize database
 db.init_app(app)
 init_accounts(app, db)
 
@@ -73,8 +77,6 @@ init_accounts(app, db)
 with app.app_context():
     db.create_all()
     print("✅ Database tables created")
-
-
 
 
 # Network credentials
@@ -111,25 +113,86 @@ def not_found(error):
 def index():
     return render_template('index.html')
 
+
+
+
+
 @app.route('/generate_qr', methods=['POST'])
 def generate_qr():
     try:
-
-        #there was a problem scanning the qr code, the field of codes and the Hidden flag were not present. 13/10/2025
-        #issue was not fields or flag, it was the SSID where I used I instead of l. I've also opted to add a logo at the centre of qr code 
-        
-        #generate string
+        # --- Generate Wi-Fi QR string ---
         wifi_string = f"WIFI:S:{SSID};T:{SECURITY};P:{PASSWORD};H:False;;"
 
-        
-        img = qrcode.make(wifi_string)
+        # --- Generate QR code ---
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(wifi_string)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="#0051FF", back_color="white").convert("RGB")
+
+        # --- Add logo at the center ---
+        logo_path = "myfi_logo.png"
+        try:
+            logo = Image.open(logo_path)
+            qr_width, qr_height = img.size
+
+            # Resize logo to ~20% of QR width
+            logo_size = int(qr_width * 0.2)
+            logo = logo.resize((logo_size, logo_size))
+
+            # Position for center
+            pos = ((qr_width - logo_size) // 2, (qr_height - logo_size) // 2)
+
+            # Circular white base behind logo
+            mask = Image.new("L", (logo_size, logo_size), 0)
+            draw = ImageDraw.Draw(mask)
+            draw.ellipse((0, 0, logo_size, logo_size), fill=255)
+
+            white_bg = Image.new("RGB", (logo_size, logo_size), "white")
+            img.paste(white_bg, pos, mask=mask)
+            img.paste(logo, pos, mask=logo if logo.mode == "RGBA" else None)
+
+        except Exception as logo_err:
+            print(f"Logo load error: {logo_err} (QR generated without logo)")
+
+        # --- Add thin rounded black border ---
+        border_thickness = 20
+        corner_radius = 30
+        bordered_size = (img.size[0] + border_thickness * 2, img.size[1] + border_thickness * 2)
+        bordered_img = Image.new("RGB", bordered_size, "white")
+
+        draw = ImageDraw.Draw(bordered_img)
+        draw.rounded_rectangle(
+            [(0, 0), bordered_size],
+            radius=corner_radius,
+            outline="black",
+            width=4
+        )
+
+        # Paste QR centered inside
+        bordered_img.paste(img, (border_thickness, border_thickness))
+
+        # --- Encode to base64 ---
         buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        qr_b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-        return render_template('index.html', qr_image=qr_b64, ssid=SSID)
+        bordered_img.save(buf, format="PNG")
+        qr_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+        return render_template("index.html", qr_image=qr_b64, ssid=SSID)
+
     except Exception as e:
         print(f"Error generating QR: {e}")
-        return render_template('index.html', error="Failed to generate QR code")
+        return render_template("index.html", error="Failed to generate QR code")
+
+
+
+
+
+
+
 
 @app.route('/groups')
 def groups_page():

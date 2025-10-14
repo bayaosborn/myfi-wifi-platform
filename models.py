@@ -50,7 +50,7 @@ class WiFiCredential(db.Model):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
+    password = db.Column(db.Text, nullable=False)  # No length limit
     member_id = db.Column(db.Integer, db.ForeignKey('member.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
