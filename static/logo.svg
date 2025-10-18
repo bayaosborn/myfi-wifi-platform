@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" aria-label="MyFi logo">
+  <g fill="none" stroke="#0051FF" stroke-linecap="round" stroke-linejoin="round">
+    <!-- main m curve -->
+    <path d="M55 95 
+             C70 65, 90 115, 100 85 
+             C110 55, 130 75, 145 95" 
+          stroke-width="15"/>
+    <!-- curved band below the m -->
+    <path d="M75 125 
+             Q100 110 125 125" 
+          stroke-width="15"/>
+    <!-- dot below the band -->
+    <circle cx="100" cy="145" r="10" fill="#0051FF" stroke="none"/>
+  </g>
+</svg>
