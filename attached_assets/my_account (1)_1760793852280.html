@@ -1,0 +1,149 @@
+<!-- templates/user/my_account.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>My Account - MyFi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #0051ff;
+      margin-bottom: 10px;
+    }
+    .wallet-section {
+      background: linear-gradient(135deg, #0051ff, #0040cc);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .wallet-balance {
+      font-size: 48px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .wallet-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px 0;
+      font-weight: 600;
+    }
+    .btn-primary {
+      background: #0051ff;
+      color: white;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    .user-info {
+      padding: 15px 0;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>My Account</h1>
+    
+    <div class="user-info">
+      <strong>Username:</strong> <span id="username"></span>
+    </div>
+    
+    <div class="wallet-section">
+      <div class="wallet-label">Wallet Balance</div>
+      <div class="wallet-balance">KSh <span id="walletBalance">0</span></div>
+      <div class="wallet-label" id="walletStatus"></div>
+    </div>
+    
+    <button class="btn btn-primary" onclick="window.location.href='/groups'">
+      Find Groups
+    </button>
+    
+    <button class="btn btn-primary" onclick="window.location.href='/create-group'">
+      Create Group
+    </button>
+    
+    <button class="btn btn-secondary" onclick="window.location.href='/'">
+      Home
+    </button>
+    
+    <button class="btn btn-secondary" onclick="logout()">
+      Logout
+    </button>
+  </div>
+
+  <script>
+    // Fetch user data on page load
+    async function loadUserData() {
+      try {
+        // Get username
+        const userRes = await fetch('/api/whoami');
+        const userData = await userRes.json();
+        
+        if (userData.username) {
+          document.getElementById('username').textContent = userData.username;
+        } else {
+          window.location.href = '/login';
+          return;
+        }
+        
+        // Get wallet balance
+        const walletRes = await fetch('/api/check-wallet');
+        const walletData = await walletRes.json();
+        
+        document.getElementById('walletBalance').textContent = walletData.wallet_balance || 0;
+        
+        const status = walletData.wallet_status;
+        const statusEl = document.getElementById('walletStatus');
+        
+        if (status === 'approved') {
+          statusEl.textContent = '✓ Active';
+          statusEl.style.color = '#90EE90';
+        } else if (status === 'pending') {
+          statusEl.textContent = '⏳ Pending Verification';
+          statusEl.style.color = '#FFD700';
+        } else if (status === 'rejected') {
+          statusEl.textContent = '✗ Payment Rejected';
+          statusEl.style.color = '#FF6B6B';
+        } else {
+          statusEl.textContent = 'No payment yet';
+          statusEl.style.color = '#CCC';
+        }
+        
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    }
+    
+    function logout() {
+      window.location.href = '/logout';
+    }
+    
+    // Load data on page load
+    loadUserData();
+  </script>
+</body>
+  </html>
