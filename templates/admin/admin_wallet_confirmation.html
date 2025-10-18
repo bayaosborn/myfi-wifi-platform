@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Wallet Confirmation - Admin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f8f8;
+      color: #333;
+      margin: 0;
+      padding: 40px;
+    }
+    h1 {
+      color: #0051ff;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+      background: white;
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #0051ff;
+      color: white;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      margin: 0 5px;
+      font-size: 14px;
+    }
+    .btn-approve { background: #28a745; }
+    .btn-approve:hover { background: #218838; }
+    .btn-reject { background: #dc3545; }
+    .btn-reject:hover { background: #b52a38; }
+    .no-users {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Wallet Payment Confirmation</h1>
+
+  {% if users %}
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>M-PESA Number</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr id="user-{{ u.id }}">
+        <td>{{ u.id }}</td>
+        <td>{{ u.username }}</td>
+        <td>{{ u.default_mpesa_phone or 'Not provided' }}</td>
+        <td>
+          <button class="btn-approve" onclick="confirmWallet('{{ u.id }}')">Approve</button>
+          <button class="btn-reject" onclick="rejectWallet('{{ u.id }}')">Reject</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="no-users">
+      <p>✅ No pending payments at the moment.</p>
+    </div>
+  {% endif %}
+
+  <script>
+    async function confirmWallet(id) {
+      if (!confirm('Approve payment for user ' + id + '?')) return;
+      
+      try {
+        const res = await fetch("/admin/api/wallet/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: id })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          alert("✅ " + data.message);
+          // Remove row from table
+          document.getElementById(`user-${id}`).remove();
+          
+          // Check if table is now empty
+          const tbody = document.querySelector('tbody');
+          if (!tbody || tbody.children.length === 0) {
+            location.reload();
+          }
+        } else {
+          alert("❌ " + data.message);
+        }
+      } catch (error) {
+        alert("❌ Network error: " + error);
+      }
+    }
+
+    async function rejectWallet(id) {
+      if (!confirm('Reject payment for user ' + id + '?')) return;
+      
+      try {
+        const res = await fetch("/admin/api/wallet/reject", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: id })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          alert("❌ " + data.message);
+          // Remove row from table
+          document.getElementById(`user-${id}`).remove();
+          
+          // Check if table is now empty
+          const tbody = document.querySelector('tbody');
+          if (!tbody || tbody.children.length === 0) {
+            location.reload();
+          }
+        } else {
+          alert("❌ " + data.message);
+        }
+      } catch (error) {
+        alert("❌ Network error: " + error);
+      }
+    }
+  </script>
+</body>
+</html>
