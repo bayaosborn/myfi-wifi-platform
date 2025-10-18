@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Tools - Pamoja Analytics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e27;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .tool-card {
+            background: #1a1f3a;
+            border: 1px solid #2d3561;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s;
+        }
+        .tool-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+        }
+        .tool-card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0f1429;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result pre {
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .status.success {
+            background: #00ff0020;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+        }
+        .status.error {
+            background: #ff000020;
+            color: #ff0000;
+            border: 1px solid #ff0000;
+        }
+        .loading {
+            color: #ffff00;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #2d3561;
+        }
+        th {
+            background: #667eea;
+            color: white;
+        }
+        .back-link {
+            display: inline-block;
+            margin: 20px 0;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛠️ Database Diagnostic Tools</h1>
+        <p>Pamoja Analytics - Developer Console</p>
+    </div>
+
+    <a href="/admin/dashboard" class="back-link">← Back to Dashboard</a>
+
+    <div class="tools-grid">
+        <!-- Connection Test -->
+        <div class="tool-card">
+            <h2>🔌 Connection Test</h2>
+            <p>Verify Supabase connection</p>
+            <button onclick="testConnection()">Test Connection</button>
+            <div id="connectionResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- List Tables -->
+        <div class="tool-card">
+            <h2>📊 Database Tables</h2>
+            <p>View all tables and row counts</p>
+            <button onclick="listTables()">List Tables</button>
+            <div id="tablesResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- System Stats -->
+        <div class="tool-card">
+            <h2>📈 System Statistics</h2>
+            <p>Current system metrics</p>
+            <button onclick="getSystemStats()">Get Stats</button>
+            <div id="statsResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Create Test User -->
+        <div class="tool-card">
+            <h2>👤 Create Test User</h2>
+            <p>Generate a test user account</p>
+            <button onclick="createTestUser()">Create User</button>
+            <div id="userResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="tool-card">
+            <h2>⚡ Recent Activity</h2>
+            <p>Latest system actions</p>
+            <button onclick="getRecentActivity()">View Activity</button>
+            <div id="activityResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Force Sync -->
+        <div class="tool-card">
+            <h2>🔄 Force Database Sync</h2>
+            <p style="color: #ff6b6b;">⚠️ Creates missing tables</p>
+            <button onclick="forceSyncDatabase()" style="background: #ff6b6b;">Sync Database</button>
+            <div id="syncResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Testing connection...</div>';
+
+            try {
+                const response = await fetch('/admin/tools/api/test-connection');
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="status success">✅ CONNECTED</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status error">❌ FAILED</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="status error">❌ ERROR: ${error.message}</div>`;
+            }
+        }
+
+        async function listTables() {
+            const resultDiv = document.getElementById('tablesResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Fetching tables...</div>';
+
+            try {
+                const response = await fetch('/admin/tools/api/list-tables');
+                const data = await response.json();
+
+                if (response.ok) {
+                    let html = `<div class="status success">✅ ${data.table_count} tables found</div>`;
+                    html += '<table><tr><th>Table</th><th>Rows</th><th>Columns</th></tr>';
+                    data.tables.forEach(table => {
+                        html += `<tr>
+                            <td>${table.name}</td>
+                            <td>${table.rows}</td>
+                            <td>${table.columns ? table.columns.length : 'N/A'}</td>
+                        </tr>`;
+                    });
+                    html += '</table>';
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<div class="status error">❌ ERROR</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="status error">❌ ERROR: ${error.message}</div>`;
+            }
+        }
+
+        async function getSystemStats() {
+            const resultDiv = document.getElementById('statsResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Loading stats...</div>';
+
+            try {
+                const response = await fetch('/admin/tools/api/system-stats');
+                const data = await response.json();
+
+                resultDiv.innerHTML = `
+                    <div class="status success">✅ STATS LOADED</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="status error">❌ ERROR: ${error.message}</div>`;
+            }
+        }
+
+        async function createTestUser() {
+            const resultDiv = document.getElementById('userResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Creating user...</div>';
+
+            try {
+                const response = await fetch('/admin/tools/api/create-test-user', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="status success">✅ USER CREATED</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="status error">❌ ERROR</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="status error">❌ ERROR: ${error.message}</div>`;
+            }
+        }
+
+        async function getRecentActivity() {
+            const resultDiv = document.getElementById('activityResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Loading activity...</div>';
+
+            try {
+                const response = await fetch('/admin/tools/api/recent-activity');
+                const data = await response.json();
+
+                resultDiv.innerHTML = `
+                    <div class="status success">✅ ACTIVITY LOADED</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="status error">❌ ERROR: ${error.message}</div>`;
+            }
+        }
+
+        async function forceSyncDatabase() {
+            if (!confirm('Are you sure you want to force sync the database? This will create missing tables.')) {
+                return;
+            }
+
+            const resultDiv = document.getElementById('syncResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Syncing database...</div>';
+
+            try {
+                const response = await fetch('/admin/tools/api/force-sync-database', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="status success">✅ SYNC COMPLETE</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="status error">❌ ERROR</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="status error">❌ ERROR: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
