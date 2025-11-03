@@ -1,0 +1,120 @@
+.notification-cards-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.notification-card {
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
+    overflow: hidden;
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    pointer-events: auto;
+}
+
+.notification-card.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification-card.hide {
+    transform: translateX(400px);
+    opacity: 0;
+}
+
+.notification-card-header {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notification-card-icon {
+    font-size: 20px;
+}
+
+.notification-card-category {
+    flex: 1;
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.notification-card-close {
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.notification-card-close:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.notification-card-body {
+    padding: 16px;
+    color: white;
+}
+
+.notification-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.notification-card-message {
+    font-size: 14px;
+    line-height: 1.5;
+    opacity: 0.95;
+}
+
+.notification-card-action {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: white;
+    color: #3B82F6;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+    transition: transform 0.2s;
+}
+
+.notification-card-action:hover {
+    transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+    .notification-cards-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .notification-card {
+        width: 100%;
+    }
+}

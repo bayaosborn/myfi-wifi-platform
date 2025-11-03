@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enable Notifications - Myfi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications-setup.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="content-wrapper">
+            <div class="icon-wrapper">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+            </div>
+            
+            <h1>Enable Notifications</h1>
+            
+<!-- DEBUG: Show what key we're using -->
+<div style="background: #f3f4f6; padding: 12px; margin: 16px 0; border-radius: 8px; word-break: break-all; font-size: 11px;">
+    <strong>Debug Info:</strong><br>
+    VAPID Key: <span id="debug-key">{{ vapid_public_key }}</span><br>
+    Key Length: <span id="debug-length"></span><br>
+    Key Type: <span id="debug-type"></span>
+</div>
+
+            
+            <p class="description">
+                Get important updates about network status, service alerts, and exclusive offers.
+            </p>
+            
+            <div class="benefits">
+                <div class="benefit-item">
+                    <span class="icon">📡</span>
+                    <div>
+                        <strong>Service Alerts</strong>
+                        <p>Network status and maintenance updates</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <span class="icon">⚠️</span>
+                    <div>
+                        <strong>Important Notices</strong>
+                        <p>Plan expiry, payment reminders, and account updates</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <span class="icon">🎁</span>
+                    <div>
+                        <strong>Exclusive Offers</strong>
+                        <p>Be first to know about bonuses and promotions</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="status-message" class="status-message"></div>
+            
+            <button id="enable-notifications-btn" class="primary-btn">
+                Enable Notifications
+            </button>
+            
+            <p class="note">Notifications are required for important service updates</p>
+        </div>
+    </div>
+    
+
+    <script>
+    const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+    
+    // Show debug info
+    document.getElementById('debug-length').textContent = VAPID_PUBLIC_KEY ? VAPID_PUBLIC_KEY.length : 'undefined';
+    document.getElementById('debug-type').textContent = typeof VAPID_PUBLIC_KEY;
+</script>
+<script src="{{ url_for('static', filename='js/notifications-setup.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,752 @@
+<!-- templates/user/my_account.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>My Account - MyFi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/my_account.css">
+
+  
+  <link rel="stylesheet" href="/static/css/add_funds.css">
+    <link rel="stylesheet" href="/static/css/myaccountButtons.css">
+  
+    
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+
+    
+
+    
+  
+</head>
+<body>
+  <div class="container">
+    <h1>My Account</h1>
+    
+  <div class="user-info">
+  <strong>Welcome,</strong> <span id="username"></span> 👋
+  </div>
+    
+
+
+<!-- Wallet Card 2 -->
+<div class="wallet-card">
+  <div class="wallet-header">MyFi Wallet</div>
+  <div class="wallet-amount">Ksh <span id="walletBalance">0</span></div>
+  <div class="wallet-footer">
+    <span class="wallet-number" id="mpesaNumber">Loading...</span>
+    <button class="add-funds-btn" onclick="manualAddMoney()">+</button>
+  </div>
+  <div class="wallet-note">Tap + to add funds</div>
+</div>
+
+
+
+
+<!-- Add Money Modal -->
+<!-- Fixed Float Version of Your Second Modal -->
+<div id="addMoneyModal"
+     class="modal-overlay"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000;">
+  <div class="modal-box">
+    <h2>Add Funds</h2>
+    <p id="mpesaDisplay"></p>
+    
+    <input 
+      type="number" 
+      id="topupAmount" 
+      placeholder="Enter amount (Min 50 KSh)"
+      min="50"
+      class="input-box"
+    />
+    
+    <button onclick="submitTopup()" class="btn-primary">Add</button>
+    <button onclick="closeAddMoneyModal()" class="btn-secondary">Cancel</button>
+    
+    <p id="topupStatus" style="display:none; margin-top:10px;"></p>
+  </div>
+</div>
+    
+
+
+<!-- Manual Payment Modal -->
+<div id="manualPaymentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000;">
+  <div style="background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 90%;">
+    <h2 style="color: #0051ff; margin-bottom: 20px;">LIPA NA MPESA BUY GOODS</h2>
+    
+    <div style="background: #f0f8ff; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #0051ff;">
+      
+      <p style="margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: center;">
+  <span><strong>Till Number:</strong> <span id="tillNumber">6940844</span></span>
+  <button onclick="copyTillNumber()" style="background: #0051ff; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 13px; cursor: pointer;">
+    Copy
+  </button>
+      </p>
+     
+      <p style="margin: 0; font-size: 14px; color: #666;">Send money via M-Pesa, then enter details below</p>
+    </div>
+    
+    <p id="manualPhoneDisplay" style="font-size: 14px; color: #666; margin-bottom: 15px;"></p>
+    
+    <input 
+      type="number" 
+      id="manualAmount" 
+      placeholder="Amount you paid (KSh)"
+      min="50"
+      style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; margin-bottom: 15px;"
+    />
+    
+    <input 
+      type="text" 
+      id="manualMpesaCode" 
+      placeholder="M-Pesa Code (e.g. SH12ABC3XY)"
+      style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; margin-bottom: 15px; text-transform: uppercase;"
+    />
+    
+    <p id="manualStatus" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px;"></p>
+    
+    <button onclick="submitManualPayment()" style="width: 100%; padding: 15px; background: #0051ff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 10px;">
+      Submit Payment
+    </button>
+    
+    <button onclick="closeManualPaymentModal()" style="width: 100%; padding: 15px; background: #6c757d; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+      Cancel
+    </button>
+  </div>
+</div>
+
+
+
+
+    <!-- Add this right after the wallet section ends -->
+
+
+
+  <!-- Add this section wherever you want in my_account.html -->
+
+<div class="account-section">
+    <h2>🔔 Recent Notifications</h2>
+    <div id="recentNotifications">
+        <p class="loading">Loading notifications...</p>
+    </div>
+    <a href="/notifications" class="view-all-link">View All Notifications →</a>
+</div>
+
+<script>
+// Fetch recent notifications (last 3)
+fetch('/api/notifications')
+    .then(res => res.json())
+    .then(data => {
+        const container = document.getElementById('recentNotifications');
+        
+        if (data.notifications && data.notifications.length > 0) {
+            container.innerHTML = '';
+            const recent = data.notifications.slice(0, 3);
+            
+            recent.forEach(notif => {
+                const div = document.createElement('div');
+                div.className = 'notification-preview';
+                div.innerHTML = `
+                    <div class="notif-title">${notif.title}</div>
+                    <div class="notif-message">${notif.message}</div>
+                    <div class="notif-time">${formatTime(notif.created_at)}</div>
+                `;
+                container.appendChild(div);
+            });
+        } else {
+            container.innerHTML = '<p class="empty">No notifications yet</p>';
+        }
+    })
+    .catch(err => {
+        console.error('Error loading notifications:', err);
+    });
+
+function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 60000);
+    
+    if (diff < 1) return 'Just now';
+    if (diff < 60) return `${diff} min ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)} hours ago`;
+    return date.toLocaleDateString();
+}
+</script>
+
+<style>
+.notification-preview {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.notif-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #4CAF50;
+}
+
+.notif-message {
+    color: #ccc;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.notif-time {
+    color: #666;
+    font-size: 12px;
+}
+
+.view-all-link {
+    display: inline-block;
+    margin-top: 10px;
+    color: #4CAF50;
+    text-decoration: none;
+}
+
+.view-all-link:hover {
+    text-decoration: underline;
+}
+</style>
+    
+
+
+
+<!-- groups have been depracated as of 2/11/2025
+<!-- Group Section
+<div id="groupSection" style="display: none;">
+  <h2 style="margin-bottom: 20px; font-size: 22px; display: flex; align-items: center; justify-content: space-between;">
+    <span>🎯 Current Group</span>
+    <span id="groupStatus" style="font-size: 14px; padding: 5px 12px; background: rgba(255,255,255,0.2); border-radius: 20px;"></span>
+  </h2>
+  
+  <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 12px; margin-bottom: 15px; backdrop-filter: blur(10px);">
+    <div style="margin: 12px 0; font-size: 16px;">
+      <strong>Group:</strong> <span id="groupName"></span>
+    </div>
+    <div style="margin: 12px 0; font-size: 16px;">
+      <strong>Code:</strong> <span id="groupCode" style="font-family: monospace; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px;"></span>
+    </div>
+    <div style="margin: 12px 0; font-size: 16px;">
+      <strong>Progress:</strong> Ksh <span id="currentBalance">0</span> / Ksh <span id="targetAmount">0</span>
+      <div style="background: rgba(255,255,255,0.3); height: 8px; border-radius: 10px; margin-top: 8px; overflow: hidden;">
+        <div id="progressBar" style="background: #4ade80; height: 100%; width: 0%; transition: width 0.5s;"></div>
+      </div>
+    </div>
+    
+    <!-- Countdown Timer --
+    <div id="countdownSection" style="margin: 15px 0; padding: 12px; background: rgba(255,255,255,0.2); border-radius: 8px; text-align: center;">
+      <div style="font-size: 14px; margin-bottom: 5px;">⏰ Time Remaining</div>
+      <div id="countdown" style="font-size: 28px; font-weight: bold; font-family: 'Courier New', monospace;"></div>
+    </div>
+    
+    <div style="margin: 12px 0; font-size: 16px;">
+      <strong>Members:</strong>
+      <ul id="membersList" style="list-style: none; padding: 0; margin-top: 10px;"></ul>
+    </div>
+  </div>
+  
+  <!-- Leave Group Button (shows if expired) --
+  <button id="leaveGroupBtn" onclick="leaveGroup()" style="display: none; width: 100%; padding: 12px; background: #003666; color: red; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px;">
+    Leave Group (Expired)
+  </button>
+</div>
+
+<div id="noGroupSection" style="display: none; text-align: center; padding: 40px 20px; color: #666;">
+  <div style="font-size: 48px; margin-bottom: 15px;">👥</div>
+  <p style="font-size: 18px; margin-bottom: 10px;">You're not in any group yet</p>
+  <p style="font-size: 14px; color: #999;">Create or join a group to start saving together!</p>
+</div>
+
+-->
+
+  
+
+    
+<!--2/11/2025 I have depracated groups so these buttons will have to change. Find Groups will be replaced with Search. Create Group will be replaced with Add Device (Here link will be # at the moment ) -->
+    
+<div class="account-buttons">
+  <div class="button-container">
+    <!-- Row 1 -->
+    <div class="button-row">
+      <button onclick="window.location.href='/search'">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M15 10a4 4 0 10-8 0 4 4 0 008 0zM12 14c-2.21 0-4 1.79-4 4v2h8v-2c0-2.21-1.79-4-4-4z" />
+        </svg>
+        Search
+      </button>
+
+      <button onclick="window.location.href='#'">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 4v16m8-8H4" />
+        </svg>
+        Add Device
+      </button>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="button-row">
+      <button onclick="window.location.href='/'">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 9.75l9-7.5 9 7.5V21a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1V9.75z" />
+        </svg>
+        Home
+      </button>
+
+      <button class="logout" onclick="logout()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1" />
+        </svg>
+        Log Out
+      </button>
+    </div>
+  </div>
+</div>
+
+
+
+    
+
+
+    
+  </div>
+
+
+<script>
+  // 
+
+// 
+  /*
+  }
+
+  
+      // Get wallet balance
+      const walletRes = await fetch('/api/check-wallet');
+      const walletData = await walletRes.json();
+      
+      document.getElementById('walletBalance').textContent = walletData.wallet_balance || 0;
+      
+      const status = walletData.wallet_status;
+      const statusEl = document.getElementById('walletStatus');
+      
+      if (status === 'approved') {
+        statusEl.textContent = '✓ Active';
+        statusEl.style.color = '#90EE90';
+      } else if (status === 'pending') {
+        statusEl.textContent = '⏳ Pending Verification';
+        statusEl.style.color = '#FFD700';
+      } else if (status === 'rejected') {
+        statusEl.textContent = '✗ Payment Rejected';
+        statusEl.style.color = '#FF6B6B';
+      } else {
+        statusEl.textContent = 'No payment yet';
+        statusEl.style.color = '#CCC';
+      }
+      
+      // Get account data including group info
+      const accountRes = await fetch('/api/my-account');
+      const accountData = await accountRes.json();
+      
+      // Display group if exists
+      if (accountData.group) {
+        document.getElementById('groupSection').style.display = 'block';
+        document.getElementById('noGroupSection').style.display = 'none';
+        
+        document.getElementById('groupName').textContent = accountData.group.name;
+        document.getElementById('currentBalance').textContent = accountData.group.current_balance;
+        document.getElementById('targetAmount').textContent = accountData.group.target_amount;
+        
+        // Display members
+        const membersList = document.getElementById('membersList');
+        membersList.innerHTML = '';
+        accountData.members.forEach(member => {
+          const li = document.createElement('li');
+          li.textContent = `${member.name}: KSh ${member.amount_contributed}`;
+          li.style.padding = '5px 0';
+          membersList.appendChild(li);
+        });
+      } else {
+        document.getElementById('groupSection').style.display = 'none';
+        document.getElementById('noGroupSection').style.display = 'block';
+      }
+      
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  }
+
+  
+  
+  function logout() {
+    window.location.href = '/logout';
+  }
+  
+  // Load data on page load
+  loadUserData();
+  */
+
+</script>
+  <script>
+    /*
+  // Fetch user data on page load
+  async function loadUserData() {
+    try {
+      // Get username from whoami
+      const userRes = await fetch('/api/whoami');
+      const userData = await userRes.json();
+      
+      console.log('=== USER DATA ===', userData);
+      
+      if (userData.username) {
+        document.getElementById('username').textContent = userData.username;
+      } else {
+        window.location.href = '/login';
+        return;
+      }
+
+      // Show M-Pesa number
+      const mpesaPhone = userData.default_mpesa_phone || userData.mpesa_phone || userData.phone;
+      if (mpesaPhone) {
+        document.getElementById('mpesaNumber').textContent = mpesaPhone;
+      } else {
+        document.getElementById('mpesaNumber').textContent = 'Not set';
+      }
+  
+      // Get wallet balance
+      const walletRes = await fetch('/api/check-wallet');
+      const walletData = await walletRes.json();
+      
+      document.getElementById('walletBalance').textContent = walletData.wallet_balance || 0;
+      
+      // Get account data including group info
+      const accountRes = await fetch('/api/my-account');
+      const accountData = await accountRes.json();
+      
+      console.log('=== ACCOUNT DATA ===');
+      console.log('Full Response:', accountData);
+      console.log('Has Group?', !!accountData.group);
+      console.log('Group Details:', accountData.group);
+      console.log('Members:', accountData.members);
+      
+      // Display group if exists
+      if (accountData.group) {
+        document.getElementById('groupSection').style.display = 'block';
+        document.getElementById('noGroupSection').style.display = 'none';
+        
+        document.getElementById('groupName').textContent = accountData.group.name || 'Unknown';
+        document.getElementById('currentBalance').textContent = accountData.group.current_balance || 0;
+        document.getElementById('targetAmount').textContent = accountData.group.target_amount || 0;
+        
+        // Display members
+        const membersList = document.getElementById('membersList');
+        membersList.innerHTML = '';
+        
+        if (accountData.members && accountData.members.length > 0) {
+          accountData.members.forEach(member => {
+            const li = document.createElement('li');
+            li.textContent = `${member.name}: KSh ${member.amount_contributed || 0}`;
+            li.style.padding = '5px 0';
+            membersList.appendChild(li);
+          });
+        } else {
+          membersList.innerHTML = '<li style="padding: 5px 0; color: #999;">No members yet</li>';
+        }
+      } else {
+        document.getElementById('groupSection').style.display = 'none';
+        document.getElementById('noGroupSection').style.display = 'block';
+      }
+      
+    } catch (error) {
+      console.error('❌ Error loading user data:', error);
+      document.getElementById('noGroupSection').style.display = 'block';
+      document.getElementById('groupSection').style.display = 'none';
+    }
+  }
+  
+  function logout() {
+    window.location.href = '/logout';
+  }
+  
+  // Load data on page load
+  loadUserData();
+  </script>
+  <script>
+  let countdownInterval = null;
+  let groupData = null;
+
+  // Fetch user data on page load
+  async function loadUserData() {
+    try {
+      // Get username from whoami
+      const userRes = await fetch('/api/whoami');
+      const userData = await userRes.json();
+      
+      console.log('=== USER DATA ===', userData);
+      
+      if (userData.username) {
+        document.getElementById('username').textContent = userData.username;
+      } else {
+        window.location.href = '/login';
+        return;
+      }
+
+      // Show M-Pesa number
+      const mpesaPhone = userData.default_mpesa_phone || userData.mpesa_phone || userData.phone;
+      if (mpesaPhone) {
+        document.getElementById('mpesaNumber').textContent = mpesaPhone;
+      } else {
+        document.getElementById('mpesaNumber').textContent = 'Not set';
+      }
+  
+      // Get wallet balance
+      const walletRes = await fetch('/api/check-wallet');
+      const walletData = await walletRes.json();
+      
+      document.getElementById('walletBalance').textContent = walletData.wallet_balance || 0;
+      
+      // Get account data including group info
+      const accountRes = await fetch('/api/my-account');
+      const accountData = await accountRes.json();
+      
+      console.log('=== ACCOUNT DATA ===');
+      console.log('Full Response:', accountData);
+      console.log('Has Group?', !!accountData.group);
+      console.log('Group Details:', accountData.group);
+      console.log('Members:', accountData.members);
+
+
+    
+      // Display group if exists
+      if (accountData.group) {
+        groupData = accountData.group;
+        document.getElementById('groupSection').style.display = 'block';
+        document.getElementById('noGroupSection').style.display = 'none';
+        
+        document.getElementById('groupName').textContent = accountData.group.name || 'Unknown';
+        document.getElementById('groupCode').textContent = accountData.group.group_code || 'N/A';
+        
+        const currentBalance = parseFloat(accountData.group.current_balance) || 0;
+        const targetAmount = parseFloat(accountData.group.target_amount) || 1;
+        
+        document.getElementById('currentBalance').textContent = currentBalance;
+        document.getElementById('targetAmount').textContent = targetAmount;
+        
+        // Update progress bar
+        const progress = (currentBalance / targetAmount) * 100;
+        document.getElementById('progressBar').style.width = progress + '%';
+        
+        // Start countdown timer
+        startCountdown(accountData.group.week_end);
+
+
+/*
+        // Check if group is expired
+        const isExpired = new Date() > new Date(accountData.group.week_end);
+        const targetReached = currentBalance >= targetAmount;
+        
+        if (isExpired && !targetReached) {
+          document.getElementById('leaveGroupBtn').style.display = 'block';
+          document.getElementById('groupStatus').textContent = '⚠️ Expired';
+          document.getElementById('groupStatus').style.background = 'rgba(239, 68, 68, 0.8)';
+        } else if (targetReached) {
+          document.getElementById('groupStatus').textContent = '✅ Complete';
+          document.getElementById('groupStatus').style.background = 'rgba(34, 197, 94, 0.8)';
+        } else {
+          document.getElementById('groupStatus').textContent = '🔄 Active';
+          document.getElementById('groupStatus').style.background = 'rgba(59, 130, 246, 0.8)';
+        }
+
+*/
+
+        /*
+// Check if group is expired
+const isExpired = new Date() > new Date(accountData.group.week_end);
+const targetReached = currentBalance >= targetAmount;
+
+// ✅ SHOW LEAVE BUTTON WHEN EXPIRED (regardless of payment status)
+if (isExpired) {
+  document.getElementById('leaveGroupBtn').style.display = 'block';
+  document.getElementById('groupStatus').textContent = '⚠️ Expired';
+  document.getElementById('groupStatus').style.background = 'rgba(239, 68, 68, 0.8)';
+} else if (accountData.group.status === 'pending') {
+  // Group not activated yet
+  document.getElementById('groupStatus').textContent = '⏳ Pending';
+  document.getElementById('groupStatus').style.background = 'rgba(251, 191, 36, 0.8)';
+  document.getElementById('leaveGroupBtn').style.display = 'block';  // ✅ Allow leaving pending groups
+} else if (targetReached) {
+  document.getElementById('groupStatus').textContent = '✅ Complete';
+  document.getElementById('groupStatus').style.background = 'rgba(34, 197, 94, 0.8)';
+} else {
+  document.getElementById('groupStatus').textContent = '🔄 Active';
+  document.getElementById('groupStatus').style.background = 'rgba(59, 130, 246, 0.8)';
+    }
+*/
+
+
+    // Check if group is expired
+        const weekEnd = accountData.group.week_end;
+        const isExpired = weekEnd ? (new Date() > new Date(weekEnd)) : false;
+        const targetReached = currentBalance >= targetAmount;
+        
+        // ✅ SHOW LEAVE BUTTON WHEN EXPIRED (regardless of payment status)
+        if (isExpired) {
+          document.getElementById('leaveGroupBtn').style.display = 'block';
+          document.getElementById('groupStatus').textContent = '⚠️ Expired';
+          document.getElementById('groupStatus').style.background = 'rgba(239, 68, 68, 0.8)';
+        } else if (accountData.group.status === 'pending') {
+          // Group not activated yet
+          document.getElementById('groupStatus').textContent = '⏳ Pending';
+          document.getElementById('groupStatus').style.background = 'rgba(251, 191, 36, 0.8)';
+          document.getElementById('leaveGroupBtn').style.display = 'block';  // ✅ Allow leaving pending groups
+        } else if (targetReached) {
+          document.getElementById('groupStatus').textContent = '✅ Complete';
+          document.getElementById('groupStatus').style.background = 'rgba(34, 197, 94, 0.8)';
+        } else {
+          document.getElementById('groupStatus').textContent = '🔄 Active';
+          document.getElementById('groupStatus').style.background = 'rgba(59, 130, 246, 0.8)';
+    }
+    
+        
+        // Display members
+        const membersList = document.getElementById('membersList');
+        membersList.innerHTML = '';
+        
+        if (accountData.members && accountData.members.length > 0) {
+          accountData.members.forEach(member => {
+            const li = document.createElement('li');
+            li.textContent = `${member.name}: KSh ${member.amount_contributed || 0}`;
+            li.style.padding = '8px 0';
+            li.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+            membersList.appendChild(li);
+          });
+        } else {
+          membersList.innerHTML = '<li style="padding: 8px 0; opacity: 0.7;">No members yet</li>';
+        }
+      } else {
+        document.getElementById('groupSection').style.display = 'none';
+        document.getElementById('noGroupSection').style.display = 'block';
+      }
+      
+    } catch (error) {
+      console.error('❌ Error loading user data:', error);
+      document.getElementById('noGroupSection').style.display = 'block';
+      document.getElementById('groupSection').style.display = 'none';
+    }
+  }
+  
+  function startCountdown(weekEndISO) {
+    // Clear any existing interval
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+    }
+    
+    const countdownEl = document.getElementById('countdown');
+    const weekEnd = new Date(weekEndISO);
+    
+    function updateCountdown() {
+      const now = new Date();
+      const diff = weekEnd - now;
+      
+      if (diff <= 0) {
+        countdownEl.textContent = 'EXPIRED';
+        countdownEl.style.color = '#ef4444';
+        clearInterval(countdownInterval);
+        
+        // Show leave button if target not reached
+        const currentBalance = parseFloat(document.getElementById('currentBalance').textContent) || 0;
+        const targetAmount = parseFloat(document.getElementById('targetAmount').textContent) || 1;
+        
+        if (currentBalance < targetAmount) {
+          document.getElementById('leaveGroupBtn').style.display = 'block';
+        }
+        return;
+      }
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      countdownEl.textContent = `${hours}h ${minutes}m ${seconds}s`;
+      
+      // Change color based on urgency
+      if (hours < 24) {
+        countdownEl.style.color = '#fbbf24'; // Yellow
+      } else if (hours < 6) {
+        countdownEl.style.color = '#ef4444'; // Red
+      } else {
+        countdownEl.style.color = '#4ade80'; // Green
+      }
+    }
+    
+    updateCountdown();
+    countdownInterval = setInterval(updateCountdown, 1000);
+  }
+  
+  async function leaveGroup() {
+    if (!confirm('Are you sure you want to leave this group? Your contribution will be refunded to your wallet.')) {
+      return;
+    }
+    
+    try {
+      const res = await fetch('/api/leave-group', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        alert(data.message);
+        window.location.reload();
+      } else {
+        alert(data.message || 'Failed to leave group');
+      }
+    } catch (error) {
+      console.error('Error leaving group:', error);
+      alert('Failed to leave group. Please try again.');
+    }
+  }
+  
+  function logout() {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+    }
+    window.location.href = '/logout';
+  }
+  
+  // Load data on page load
+  loadUserData();
+  
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+    }
+  });
+  </script>
+
+  <script>
+function copyTillNumber() {
+  const till = document.getElementById("tillNumber").innerText;
+  navigator.clipboard.writeText(till);
+  alert("Till number copied!");
+}
+  </script>
+
+  <script src="/static/js/add_funds.js">
+   </script>
+<script src="/static/js/manual_payment.js"></script>
+  
+</body>
+  </html>

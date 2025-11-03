@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Settings - Myfi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications/settings.css') }}">
+</head>
+<body>
+    <div class="page-header">
+        <a href="/notifications" class="back-btn">← Back</a>
+        <h1>Notification Settings</h1>
+    </div>
+    
+    <div class="settings-container">
+        <div class="settings-section">
+            <h2>Notification Categories</h2>
+            <p class="section-desc">Choose which types of notifications you want to receive</p>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <strong>Weather Alerts</strong>
+                    <p>Temperature changes and weather conditions in your area</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="weather_enabled" {{ 'checked' if preferences.get('weather_enabled', True) }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <strong>Service Updates</strong>
+                    <p>Network status, maintenance, and service alerts</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="service_enabled" {{ 'checked' if preferences.get('service_enabled', True) }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <strong>Promotions & Offers</strong>
+                    <p>Exclusive deals, bonuses, and special offers</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="promo_enabled" {{ 'checked' if preferences.get('promo_enabled', True) }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <strong>System Notifications</strong>
+                    <p>Important account and app updates</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="system_enabled" {{ 'checked' if preferences.get('system_enabled', True) }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        
+        <button id="saveBtn" class="save-btn">Save Settings</button>
+        
+        <div id="statusMessage" class="status-message" style="display:none;"></div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/notifications/settings.js') }}"></script>
+</body>
+</html>

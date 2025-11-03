@@ -1,8 +1,0 @@
-ADMIN_PASSWORD=@Blvck13Baya2001!
-SSID_NAME=poaA7rglU
-SSID_PASSWORD=b8K!p2Zr#V7m
-SSID_SECURITY=WPA2
-SECRET_KEY=b6d67d960509bbc97e4d45da95f53231a81500a82de198628b6839573f4bf16a
-DATABASE_URL=postgresql://postgres:bb2jBc2m_vUN$xM@db.qeijdlnheosvkwiwxmli.supabase.co:6543/postgres
-SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlaWpkbG5oZW9zdmt3aXd4bWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNjk3NjksImV4cCI6MjA3NTk0NTc2OX0.zuQSK501FXIkcBEq94quuI-Rtw2CcwiRWKr_LKelemg
-SUPABASE_URL=https://qeijdlnheosvkwiwxmli.supabase.co

@@ -1,0 +1,474 @@
+# routes/groups.py
+import os
+import random
+import string
+from flask import Blueprint, render_template, request, jsonify, session
+from supabase import create_client
+from dotenv import load_dotenv
+from datetime import datetime, timedelta
+
+load_dotenv()
+
+supabase = create_client(
+    os.getenv('SUPABASE_URL'),
+    os.getenv('SUPABASE_KEY')
+)
+
+groups_bp = Blueprint('groups', __name__)
+
+@groups_bp.route('/groups')
+def groups_page():
+    """View all groups"""
+    try:
+        result = supabase.table('group').select('*, member(*)').execute()
+        all_groups = result.data or []
+        
+        # Add member count to each group
+        for group in all_groups:
+            group['member_count'] = len(group.get('member', []))
+        
+        return render_template('groups/groups.html', groups=all_groups)
+    except Exception as e:
+        print(f"Error loading groups: {e}")
+        return render_template('groups/groups.html', groups=[])
+
+
+@groups_bp.route('/create-group')
+def create_group_page():
+    """Create group page"""
+    user_id = session.get('user_id')
+    if not user_id:
+        return render_template('auth/login.html')
+    return render_template('groups/create_group.html')
+
+
+@groups_bp.route('/api/create-group', methods=['POST'])
+def api_create_group():
+    """Create a new group"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"success": False, "message": "No data provided"}), 400
+        
+        if not data.get('group_name') or len(data['group_name']) < 3:
+            return jsonify({"success": False, "message": "Group name must be at least 3 characters"}), 400
+        
+        # Get max_members from request (default to 3)
+        max_members = int(data.get('max_members', 3))
+        
+        # Validate max_members
+        if max_members not in [2, 3]:
+            return jsonify({"success": False, "message": "Group size must be 2 or 3 members"}), 400
+        
+        # Calculate target amount based on group size
+        if max_members == 2:
+            target_amount = 400.0
+            upfront_fee = 200.0  # 50% upfront
+        else:  # max_members == 3
+            target_amount = 450.0
+            upfront_fee = 150.0  # 33.3% upfront
+        
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({"success": False, "message": "Not logged in"}), 401
+        
+        # Fetch user from Supabase
+        user_result = supabase.table('user').select('*').eq('id', user_id).execute()
+        
+        if not user_result.data:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        user = user_result.data[0]
+        
+        # Check if user already in a group
+        if user.get('member_id'):
+            return jsonify({"success": False, "message": "You're already in a group. Leave it first."}), 400
+        
+        # Check wallet balance for upfront fee
+        current_balance = float(user.get('wallet_balance', 0))
+        if current_balance < upfront_fee:
+            return jsonify({
+                "success": False, 
+                "message": f"Insufficient wallet balance. Need {upfront_fee} KSh upfront (you have {current_balance} KSh)."
+            }), 402
+        
+        # Generate unique group code
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+        # Calculate week_end (7 days from now)
+        week_end = (datetime.utcnow() + timedelta(days=7)).isoformat()
+
+        # Create group in Supabase
+        # Create group in Supabase
+        # Create group in Supabase - STARTS AS PENDING
+        group_result = supabase.table('group').insert({
+            'name': data['group_name'],
+            'group_code': code,
+            'admin_id': user_id,
+            'max_members': max_members,
+            'target_amount': target_amount,
+            'current_balance': upfront_fee,
+            'status': 'pending',      # ✅ Group starts as pending
+            'week_start': None,       # ✅ Will be set when full
+            'week_end': None,         # ✅ Will be set when full
+            'is_active': False        # ✅ Not active until full
+        }).execute()
+        
+        new_group = group_result.data[0]
+        
+        # Create member in Supabase
+        member_result = supabase.table('member').insert({
+            'name': user['username'],
+            'phone': user.get('default_mpesa_phone') or user.get('phone'),
+            'group_id': new_group['id'],
+            'amount_contributed': upfront_fee  # ✅ Start with upfront contribution
+        }).execute()
+        
+        new_member = member_result.data[0]
+        
+        # Deduct from wallet and link user to member
+        new_wallet_balance = current_balance - upfront_fee
+        supabase.table('user').update({
+            'member_id': new_member['id'],
+            'wallet_balance': new_wallet_balance  # ✅ DEDUCT UPFRONT
+        }).eq('id', user_id).execute()
+        
+        remaining_members = max_members - 1
+        print(f"✅ Group created: {new_group['name']} | Code: {code} | Status: PENDING | Waiting for {remaining_members} more member(s)")
+
+        return jsonify({
+                "success": True,
+                "message": f"Group created! {upfront_fee} KSh debited. Waiting for {remaining_members} more member(s) to activate.",
+                "group_code": code,
+            "group_id": new_group['id'],
+            "debited_amount": upfront_fee,
+            "new_wallet_balance": new_wallet_balance
+        }), 201
+        
+    except Exception as e:
+        print(f"Create group error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "message": f"Failed to create group: {str(e)}"}), 500
+
+''''
+@groups_bp.route('/api/join-group', methods=['POST'])
+def api_join_group():
+    """Join an existing group"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"success": False, "message": "No data provided"}), 400
+        
+        if not data.get('group_code'):
+            return jsonify({"success": False, "message": "Group code required"}), 400
+        
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({"success": False, "message": "Not logged in"}), 401
+        
+        # Fetch user from Supabase
+        user_result = supabase.table('user').select('*').eq('id', user_id).execute()
+        
+        if not user_result.data:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        user = user_result.data[0]
+        
+        if user.get('member_id'):
+            return jsonify({"success": False, "message": "You're already in a group. Leave it first."}), 400
+        
+        # Find group by code
+        group_result = supabase.table('group').select('*, member(*)').eq('group_code', data['group_code'].upper()).execute()
+        
+        if not group_result.data:
+            return jsonify({"success": False, "message": "Group not found. Check the code."}), 404
+        
+        group = group_result.data[0]
+        
+        # Count current members
+        members_count = len(group.get('member', []))
+        max_members = group.get('max_members', 3)
+        
+        if members_count >= max_members:
+            return jsonify({"success": False, "message": f"Group is full (max {max_members} members)"}), 400
+        
+        # Calculate upfront fee based on group size
+        if max_members == 2:
+            upfront_fee = 200.0
+        else:  # max_members == 3
+            upfront_fee = 150.0
+        
+        # Check wallet balance
+        current_balance = float(user.get('wallet_balance', 0))
+        if current_balance < upfront_fee:
+            return jsonify({
+                "success": False, 
+                "message": f"Insufficient wallet balance. Need {upfront_fee} KSh to join (you have {current_balance} KSh)."
+            }), 402
+
+        # Create member
+        member_result = supabase.table('member').insert({
+            'name': user['username'],
+            'phone': user.get('default_mpesa_phone') or user.get('phone'),
+            'group_id': group['id'],
+            'amount_contributed': upfront_fee  # ✅ Start with upfront contribution
+        }).execute()
+        
+        new_member = member_result.data[0]
+        
+        # Update group balance
+        new_group_balance = float(group.get('current_balance', 0)) + upfront_fee
+        supabase.table('group').update({
+            'current_balance': new_group_balance
+        }).eq('id', group['id']).execute()
+        
+        # Deduct from wallet and link user to member
+        new_wallet_balance = current_balance - upfront_fee
+        supabase.table('user').update({
+            'member_id': new_member['id'],
+            'wallet_balance': new_wallet_balance  # ✅ DEDUCT UPFRONT
+        }).eq('id', user_id).execute()
+        
+        print(f"✅ User joined group: {group['name']} | Member debited: {upfront_fee} KSh")
+        
+        return jsonify({
+            "success": True,
+            "message": f"Joined {group['name']}! {upfront_fee} KSh debited from your wallet.",
+            "group_id": group['id'],
+            "debited_amount": upfront_fee,
+            "new_wallet_balance": new_wallet_balance
+        }), 200
+        
+    except Exception as e:
+        print(f"Join group error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "message": f"Failed to join group: {str(e)}"}), 500
+'''
+
+@groups_bp.route('/api/join-group', methods=['POST'])
+def api_join_group():
+    """Join an existing group"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"success": False, "message": "No data provided"}), 400
+        
+        if not data.get('group_code'):
+            return jsonify({"success": False, "message": "Group code required"}), 400
+        
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({"success": False, "message": "Not logged in"}), 401
+        
+        # Fetch user from Supabase
+        user_result = supabase.table('user').select('*').eq('id', user_id).execute()
+        
+        if not user_result.data:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        user = user_result.data[0]
+        
+        if user.get('member_id'):
+            return jsonify({"success": False, "message": "You're already in a group. Leave it first."}), 400
+        
+        # Find group by code
+        group_result = supabase.table('group').select('*, member(*)').eq('group_code', data['group_code'].upper()).execute()
+        
+        if not group_result.data:
+            return jsonify({"success": False, "message": "Group not found. Check the code."}), 404
+        
+        group = group_result.data[0]
+        
+        # Count current members
+        members_count = len(group.get('member', []))
+        max_members = group.get('max_members', 3)
+        
+        if members_count >= max_members:
+            return jsonify({"success": False, "message": f"Group is full (max {max_members} members)"}), 400
+        
+        # Calculate upfront fee based on group size
+        if max_members == 2:
+            upfront_fee = 200.0
+        else:  # max_members == 3
+            upfront_fee = 150.0
+        
+        # Check wallet balance
+        current_balance = float(user.get('wallet_balance', 0))
+        if current_balance < upfront_fee:
+            return jsonify({
+                "success": False, 
+                "message": f"Insufficient wallet balance. Need {upfront_fee} KSh to join (you have {current_balance} KSh)."
+            }), 402
+
+        # Create member
+        member_result = supabase.table('member').insert({
+            'name': user['username'],
+            'phone': user.get('default_mpesa_phone') or user.get('phone'),
+            'group_id': group['id'],
+            'amount_contributed': upfront_fee
+        }).execute()
+        
+        new_member = member_result.data[0]
+        
+        # Update group balance
+        new_group_balance = float(group.get('current_balance', 0)) + upfront_fee
+        
+        # ✅ CHECK IF GROUP IS NOW FULL - ACTIVATE IT
+        new_member_count = members_count + 1
+        
+        if new_member_count >= max_members:
+            # Group is now full - ACTIVATE IT!
+            week_start = datetime.utcnow()
+            week_end = week_start + timedelta(days=7)
+            
+            supabase.table('group').update({
+                'current_balance': new_group_balance,
+                'status': 'active',           # ✅ ACTIVATE
+                'week_start': week_start.isoformat(),
+                'week_end': week_end.isoformat(),
+                'is_active': True
+            }).eq('id', group['id']).execute()
+
+
+            
+            
+            print(f"✅ Group ACTIVATED: {group['name']} | All {max_members} members joined!")
+            activation_msg = f" Group is now ACTIVE! You have 7 days of WiFi access."
+        else:
+            # Group still waiting for more members
+            supabase.table('group').update({
+                'current_balance': new_group_balance
+            }).eq('id', group['id']).execute()
+            
+            remaining = max_members - new_member_count
+            activation_msg = f" Waiting for {remaining} more member(s) to activate."
+        
+        # Deduct from wallet and link user to member
+        new_wallet_balance = current_balance - upfront_fee
+        supabase.table('user').update({
+            'member_id': new_member['id'],
+            'wallet_balance': new_wallet_balance
+        }).eq('id', user_id).execute()
+        
+        print(f"✅ User joined group: {group['name']} | Member debited: {upfront_fee} KSh")
+        
+        return jsonify({
+            "success": True,
+            "message": f"Joined {group['name']}! {upfront_fee} KSh debited from your wallet.{activation_msg}",
+            "group_id": group['id'],
+            "debited_amount": upfront_fee,
+            "new_wallet_balance": new_wallet_balance,
+            "group_activated": new_member_count >= max_members
+        }), 200
+        
+    except Exception as e:
+        print(f"Join group error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "message": f"Failed to join group: {str(e)}"}), 500
+
+
+
+@groups_bp.route('/api/search-group', methods=['GET'])
+def search_group():
+    """Search for a group by code"""
+    try:
+        code = request.args.get('code', '').upper().strip()
+        
+        if not code:
+            return jsonify({"found": False, "message": "No code provided"})
+        
+        # Search by group_code
+        group_result = supabase.table('group').select('*, member(*)').eq('group_code', code).execute()
+        
+        if not group_result.data:
+            return jsonify({"found": False})
+        
+        group = group_result.data[0]
+        members_count = len(group.get('member', []))
+        max_members = group.get('max_members', 3)
+        
+        return jsonify({
+            "found": True,
+            "group": {
+                "name": group['name'],
+                "group_code": group['group_code'],
+                "current_balance": group.get('current_balance', 0),
+                "target_amount": group['target_amount'],
+                "member_count": members_count,
+                "max_members": max_members,
+                "remaining": group['target_amount'] - group.get('current_balance', 0)
+            }
+        })
+    except Exception as e:
+        print(f"Search error: {e}")
+        return jsonify({"found": False, "message": "Search failed"}), 500
+
+
+@groups_bp.route('/api/leave-group', methods=['POST'])
+def leave_group():
+    """Leave current group"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({"success": False, "message": "Not logged in"}), 401
+        
+        # Get user
+        user_result = supabase.table('user').select('*').eq('id', user_id).execute()
+        if not user_result.data:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        user = user_result.data[0]
+        member_id = user.get('member_id')
+        
+        if not member_id:
+            return jsonify({"success": False, "message": "You're not in any group"}), 400
+        
+        # Get member details
+        member_result = supabase.table('member').select('*').eq('id', member_id).execute()
+        if not member_result.data:
+            return jsonify({"success": False, "message": "Member record not found"}), 404
+        
+        member = member_result.data[0]
+        group_id = member.get('group_id')
+        contributed = float(member.get('amount_contributed', 0))
+        
+        # Refund to wallet
+        current_balance = float(user.get('wallet_balance', 0))
+        new_balance = current_balance + contributed
+        
+        # Update group balance
+        group_result = supabase.table('group').select('current_balance').eq('id', group_id).execute()
+        if group_result.data:
+            group = group_result.data[0]
+            new_group_balance = float(group.get('current_balance', 0)) - contributed
+            supabase.table('group').update({
+                'current_balance': max(0, new_group_balance)
+            }).eq('id', group_id).execute()
+        
+        # Delete member record
+        supabase.table('member').delete().eq('id', member_id).execute()
+        
+        # Unlink user from member and refund
+        supabase.table('user').update({
+            'member_id': None,
+            'wallet_balance': new_balance
+        }).eq('id', user_id).execute()
+        
+        return jsonify({
+            "success": True, 
+            "message": f"You've left the group. {contributed} KSh refunded to your wallet.",
+            "refunded_amount": contributed,
+            "new_wallet_balance": new_balance
+        })
+        
+    except Exception as e:
+        print(f"Leave group error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "message": "Failed to leave group"}), 500

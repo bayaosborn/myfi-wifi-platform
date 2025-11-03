@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Location - Myfi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/location-identity.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="content-wrapper">
+            <div class="icon-wrapper">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    <circle cx="12" cy="9" r="2.5"/>
+                </svg>
+            </div>
+            
+            <h1>Enable Device Location</h1>
+            
+            <p class="description">
+                Myfi identifies your device by location to optimize network performance 
+                and expand coverage where it's needed most.
+            </p>
+            
+            <div class="benefits">
+                <div class="benefit-item">
+                    <span class="check-icon">✓</span>
+                    <span>Optimize network speed in your area</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="check-icon">✓</span>
+                    <span>Support multiple devices at home</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="check-icon">✓</span>
+                    <span>Improve service delivery</span>
+                </div>
+            </div>
+            
+            <div id="status-message" class="status-message"></div>
+            
+            <button id="enable-location-btn" class="primary-btn">
+                Enable Location
+            </button>
+            
+            <p class="required-text">Location permission is required to use Myfi</p>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/location-identity.js') }}"></script>
+</body>
+</html>

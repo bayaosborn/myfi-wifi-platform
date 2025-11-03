@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Myfi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications/center.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications/cards.css') }}">
+
+
+
+    <!-- ... existing links ... -->
+    <style>
+        .notification-cards-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .notification-card {
+            width: 360px;
+            background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.4s ease;
+        }
+
+        .notification-card.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notification-card-header {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification-card-category {
+            flex: 1;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        .notification-card-close {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .notification-card-body {
+            padding: 16px;
+            color: white;
+        }
+
+        .notification-card-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .notification-card-message {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+
+
+    
+</head>
+<body>
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Notifications</h1>
+            <a href="/notifications/settings" class="settings-link">⚙️</a>
+        </div>
+    </div>
+    
+    <div class="notifications-container">
+        <div id="loading-state" class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Loading notifications...</p>
+        </div>
+        
+        <div id="empty-state" class="empty-state" style="display: none;">
+            <div class="icon">🔔</div>
+            <h2>No notifications yet</h2>
+            <p>You'll see updates here when we have news for you</p>
+        </div>
+        
+        <div id="notification-list" class="notification-list" style="display: none;"></div>
+    </div>
+    
+    <!-- Card container -->
+    <div id="notificationCardsContainer" class="notification-cards-container"></div>
+    
+    <!-- Only load these two scripts -->
+    <script src="{{ url_for('static', filename='js/notifications/center.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notifications/realtime.js') }}"></script>
+</body>
+</html>

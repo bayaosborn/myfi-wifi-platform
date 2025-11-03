@@ -1,0 +1,494 @@
+<!-- Global Incoming Call Popup (Works on ALL pages) -->
+{% if session.get('user_id') %}
+<div id="globalIncomingCall" class="global-call-popup" style="display:none;">
+    <div class="global-call-content">
+        <div class="call-animation">
+            <div class="call-icon">📞</div>
+            <div class="call-ripple"></div>
+        </div>
+        <p class="call-label">Incoming Call</p>
+        <p id="globalCallerName" class="caller-name"></p>
+        <div class="call-buttons">
+            <button id="globalAcceptBtn" class="global-accept-btn">
+                <span>✓</span>
+                <span>Accept</span>
+            </button>
+            <button id="globalRejectBtn" class="global-reject-btn">
+                <span>✕</span>
+                <span>Decline</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+
+<style>
+:root {
+    --blue1: #0051ff;
+    --blue2: #008bff;
+    --blue3: #00bfff;
+    --success: #10b981;
+    --danger: #ef4444;
+    --bg-dark: rgba(10, 15, 25, 0.9);
+    --bg-light: rgba(255, 255, 255, 0.9);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --popup-bg: linear-gradient(145deg, rgba(10,25,55,0.95), rgba(15,40,90,0.9));
+        --text-main: #e0e7ff;
+        --text-sub: rgba(255,255,255,0.8);
+        --btn-bg-accept: linear-gradient(90deg, #0af07c, #10b981);
+        --btn-bg-reject: linear-gradient(90deg, #ef4444, #dc2626);
+        --call-icon-bg: rgba(255,255,255,0.95);
+        --ripple-border: rgba(255,255,255,0.6);
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --popup-bg: linear-gradient(145deg, rgba(230,240,255,0.95), rgba(200,225,255,0.9));
+        --text-main: #0d1b2a;
+        --text-sub: rgba(0,0,0,0.6);
+        --btn-bg-accept: linear-gradient(90deg, #10b981, #059669);
+        --btn-bg-reject: linear-gradient(90deg, #ef4444, #dc2626);
+        --call-icon-bg: white;
+        --ripple-border: rgba(0,81,255,0.3);
+    }
+}
+
+.global-call-popup {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-dark);
+    backdrop-filter: blur(14px);
+    z-index: 999999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.global-call-content {
+    background: var(--popup-bg);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 12px 40px rgba(0,81,255,0.2);
+    backdrop-filter: blur(18px);
+    padding: 40px 30px;
+    border-radius: 25px;
+    text-align: center;
+    width: 350px;
+    max-width: 90%;
+    animation: slideUp 0.4s ease;
+}
+
+.call-animation {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 25px;
+}
+
+.call-icon {
+    font-size: 50px;
+    background: var(--call-icon-bg);
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+    animation: bounce 1s infinite;
+    color: var(--blue1);
+    box-shadow: 0 4px 20px rgba(0,81,255,0.2);
+}
+
+.call-ripple {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid var(--ripple-border);
+    animation: ripple 1.5s infinite;
+}
+
+.call-label {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.caller-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-main);
+    margin-bottom: 30px;
+}
+
+.call-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.global-accept-btn, .global-reject-btn {
+    flex: 1;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    color: white;
+}
+
+.global-accept-btn {
+    background: var(--btn-bg-accept);
+    box-shadow: 0 4px 15px rgba(16,185,129,0.3);
+}
+
+.global-accept-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(16,185,129,0.4);
+}
+
+.global-reject-btn {
+    background: var(--btn-bg-reject);
+    box-shadow: 0 4px 15px rgba(239,68,68,0.3);
+}
+
+.global-reject-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(239,68,68,0.4);
+}
+
+.global-accept-btn span:first-child,
+.global-reject-btn span:first-child {
+    font-size: 20px;
+}
+
+/* ─────────────── Animations ─────────────── */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+</style>
+
+
+
+
+
+
+<!-- Global Call CSS -
+<style>
+.global-call-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 999999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.global-call-content {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px 30px;
+    border-radius: 25px;
+    text-align: center;
+    max-width: 90%;
+    width: 350px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.4s ease;
+}
+
+.call-animation {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 20px;
+}
+
+.call-icon {
+    font-size: 50px;
+    background: white;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+    animation: bounce 1s infinite;
+}
+
+.call-ripple {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid white;
+    animation: ripple 1.5s infinite;
+}
+
+.call-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.caller-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    margin: 0 0 30px;
+}
+
+.call-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.global-accept-btn, .global-reject-btn {
+    flex: 1;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.global-accept-btn {
+    background: #10b981;
+    color: white;
+}
+
+.global-accept-btn:hover {
+    background: #059669;
+    transform: scale(1.05);
+}
+
+.global-reject-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.global-reject-btn:hover {
+    background: #dc2626;
+    transform: scale(1.05);
+}
+
+.global-accept-btn span:first-child,
+.global-reject-btn span:first-child {
+    font-size: 20px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+</style>
+-->
+
+<!-- Global Call Script -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+(function() {
+    const userId = "{{ session.get('user_id') }}";
+    
+    if (!userId) {
+        console.log('⚠️ No user logged in, skipping global call setup');
+        return;
+    }
+    
+    console.log('🔧 [GlobalCall] Initializing for user:', userId);
+    
+    let globalSocket = null;
+    let incomingCallData = null;
+    
+    // Initialize socket
+    function initGlobalSocket() {
+        globalSocket = io({
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 5
+        });
+        
+        globalSocket.on('connect', () => {
+            console.log('✅ [GlobalCall] Socket connected:', globalSocket.id);
+        });
+        
+        globalSocket.on('disconnect', (reason) => {
+            console.log('❌ [GlobalCall] Socket disconnected:', reason);
+        });
+        
+        globalSocket.on('connect_error', (error) => {
+            console.error('❌ [GlobalCall] Connection error:', error);
+        });
+        
+        globalSocket.on('incoming_call', (data) => {
+            console.log('📞 [GlobalCall] Incoming call from:', data.caller_username);
+            handleIncomingCall(data);
+        });
+        
+        globalSocket.on('call_ended', () => {
+            console.log('📴 [GlobalCall] Call ended by caller');
+            hideCallPopup();
+        });
+    }
+    
+    function handleIncomingCall(data) {
+        incomingCallData = data;
+        
+        // Show popup
+        document.getElementById('globalCallerName').textContent = data.caller_username;
+        document.getElementById('globalIncomingCall').style.display = 'flex';
+        
+        // Play ringtone (optional)
+        playRingtone();
+        
+        // Browser notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Incoming Call from ' + data.caller_username, {
+                body: 'Click to answer',
+                icon: '/static/logo.svg',
+                requireInteraction: true,
+                tag: 'incoming-call'
+            });
+        }
+        
+        // Vibrate (mobile)
+        if ('vibrate' in navigator) {
+            navigator.vibrate([200, 100, 200, 100, 200]);
+        }
+    }
+    
+    function hideCallPopup() {
+        document.getElementById('globalIncomingCall').style.display = 'none';
+        stopRingtone();
+        incomingCallData = null;
+    }
+    
+    let ringtoneAudio = null;
+    function playRingtone() {
+        // You can add a ringtone mp3 file
+        // ringtoneAudio = new Audio('/static/ringtone.mp3');
+        // ringtoneAudio.loop = true;
+        // ringtoneAudio.play().catch(e => console.log('Ringtone play failed:', e));
+    }
+    
+    function stopRingtone() {
+        if (ringtoneAudio) {
+            ringtoneAudio.pause();
+            ringtoneAudio.currentTime = 0;
+        }
+    }
+    
+    // Accept call button
+    document.getElementById('globalAcceptBtn').addEventListener('click', () => {
+        console.log('✅ [GlobalCall] Accepting call');
+        
+        // Store call data in sessionStorage
+        sessionStorage.setItem('pendingCall', JSON.stringify(incomingCallData));
+        
+        // Redirect to search page
+        window.location.href = '/search';
+    });
+    
+    // Reject call button
+    document.getElementById('globalRejectBtn').addEventListener('click', () => {
+        console.log('❌ [GlobalCall] Rejecting call');
+        
+        if (incomingCallData && globalSocket) {
+            globalSocket.emit('hang_up', { 
+                other_user_id: incomingCallData.caller_id,
+                call_id: incomingCallData.call_id
+            });
+        }
+        
+        hideCallPopup();
+    });
+    
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            console.log('🔔 Notification permission:', permission);
+        });
+    }
+    
+    // Initialize socket on page load
+    initGlobalSocket();
+    
+    console.log('✅ [GlobalCall] Setup complete');
+})();
+</script>
+{% endif %}

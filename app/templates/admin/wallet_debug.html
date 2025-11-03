@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Transaction Data</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #fff;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        .stat {
+            background: #3d3d3d;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        pre {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .payment-card {
+            background: #3d3d3d;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        .error {
+            background: #d32f2f;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #388e3c;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Transaction Data Debug Page</h1>
+        
+        <div class="stat">
+            <strong>Pending Count:</strong> {{ pending_count }}
+        </div>
+        
+        <div class="stat">
+            <strong>Total Pending:</strong> KSh {{ total_pending }}
+        </div>
+
+        <div class="stat">
+            <strong>Payments List Length:</strong> {{ pending_payments|length }}
+        </div>
+
+        <hr style="border-color: #4CAF50; margin: 30px 0;">
+
+        <h2>📋 Raw Payment Data:</h2>
+        
+        {% if pending_payments %}
+            <div class="success">✅ Pending payments list EXISTS and has {{ pending_payments|length }} items</div>
+            
+            {% for payment in pending_payments %}
+            <div class="payment-card">
+                <h3>Payment #{{ loop.index }}</h3>
+                <pre>{{ payment }}</pre>
+                
+                <div style="margin-top: 15px;">
+                    <p><strong>Payment ID:</strong> {{ payment.id }}</p>
+                    <p><strong>User ID:</strong> {{ payment.user_id }}</p>
+                    <p><strong>Amount:</strong> {{ payment.amount }}</p>
+                    <p><strong>Status:</strong> {{ payment.status }}</p>
+                    <p><strong>M-Pesa Code:</strong> {{ payment.mpesa_receipt_number }}</p>
+                    <p><strong>Phone:</strong> {{ payment.default_mpesa_phone }}</p>
+                    <p><strong>Created At:</strong> {{ payment.created_at }}</p>
+                    
+                    <hr style="border-color: #555; margin: 15px 0;">
+                    
+                    <p><strong>User Object Exists?</strong> {{ 'YES' if payment.user else 'NO' }}</p>
+                    {% if payment.user %}
+                        <p><strong>Username:</strong> {{ payment.user.username }}</p>
+                        <pre>User Data: {{ payment.user }}</pre>
+                    {% else %}
+                        <p style="color: #f44336;">⚠️ NO USER DATA ATTACHED</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            
+        {% else %}
+            <div class="error">❌ pending_payments is EMPTY or NONE</div>
+        {% endif %}
+
+        <hr style="border-color: #4CAF50; margin: 30px 0;">
+        
+        <h2>🔗 Links:</h2>
+        <div style="margin: 20px 0;">
+            <a href="/admin/dashboard/wallet-confirmation" style="color: #4CAF50; margin-right: 20px;">Wallet Confirmation Page</a>
+            <a href="/admin/dashboard/debug-transactions" style="color: #2196F3; margin-right: 20px;">API Debug Endpoint</a>
+            <a href="/admin/dashboard" style="color: #FF9800;">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

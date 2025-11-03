@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Create Group - MyFi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+    }
+    h1 { color: #0051ff; text-align: center; }
+    .form-group {
+      margin: 20px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .info-box {
+      background: #f0f8ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      border-left: 4px solid #0051ff;
+    }
+    .info-box p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 15px;
+      background: #0051ff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover { background: #0040cc; }
+    .error {
+      color: #dc3545;
+      margin: 10px 0;
+      display: none;
+    }
+    .success {
+      color: #28a745;
+      margin: 10px 0;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Create Group</h1>
+    
+    <form onsubmit="createGroup(event)">
+      <div class="form-group">
+        <label>Group Name</label>
+        <input type="text" id="groupName" placeholder="Enter group name" required minlength="3">
+      </div>
+      
+      <div class="form-group">
+        <label>Group Size</label>
+        <select id="maxMembers" onchange="updatePricing()">
+          <option value="3" selected>3 Members (Recommended)</option>
+          <option value="2">2 Members</option>
+        </select>
+      </div>
+      
+      <div class="info-box" id="pricingInfo">
+        <p><strong>Pricing Breakdown:</strong></p>
+        <p>Total Target: <strong id="targetAmount">450 KSh</strong></p>
+        <p>Your Upfront Fee: <strong id="upfrontFee">150 KSh</strong></p>
+        <p>Per Member: <strong id="perMember">150 KSh</strong></p>
+      </div>
+      
+      <button type="submit">Create Group</button>
+    </form>
+    
+    <p class="error" id="errorMsg"></p>
+    <p class="success" id="successMsg"></p>
+  </div>
+
+  <script>
+    function updatePricing() {
+      const maxMembers = parseInt(document.getElementById('maxMembers').value);
+      
+      if (maxMembers === 2) {
+        document.getElementById('targetAmount').textContent = '400 KSh';
+        document.getElementById('upfrontFee').textContent = '200 KSh';
+        document.getElementById('perMember').textContent = '200 KSh';
+      } else {
+        document.getElementById('targetAmount').textContent = '450 KSh';
+        document.getElementById('upfrontFee').textContent = '150 KSh';
+        document.getElementById('perMember').textContent = '150 KSh';
+      }
+    }
+    
+    async function createGroup(event) {
+      event.preventDefault();
+      
+      const groupName = document.getElementById('groupName').value.trim();
+      const maxMembers = parseInt(document.getElementById('maxMembers').value);
+      
+      const errorMsg = document.getElementById('errorMsg');
+      const successMsg = document.getElementById('successMsg');
+      
+      errorMsg.style.display = 'none';
+      successMsg.style.display = 'none';
+      
+      if (!groupName || groupName.length < 3) {
+        errorMsg.textContent = 'Group name must be at least 3 characters';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/create-group', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            group_name: groupName,
+            max_members: maxMembers
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          successMsg.textContent = `${data.message}\nGroup Code: ${data.group_code}`;
+          successMsg.style.display = 'block';
+          
+          setTimeout(() => {
+            window.location.href = '/my-account';
+          }, 2000);
+        } else {
+          errorMsg.textContent = data.message;
+          errorMsg.style.display = 'block';
+        }
+      } catch (error) {
+        errorMsg.textContent = 'Failed to create group. Please try again.';
+        errorMsg.style.display = 'block';
+        console.error('Create group error:', error);
+      }
+    }
+  </script>
+</body>
+</html>

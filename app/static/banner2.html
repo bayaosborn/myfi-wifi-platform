@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MYFI — Scan Pay Connect</title>
+<style>
+  :root {
+    --blue:#0051FF;
+    --dark:#0A254F;
+    --gray:#6B7280;
+    --white:#fff;
+    --soft-bg:linear-gradient(180deg,#F9FBFF 0%,#EFF4FF 100%);
+    font-family:"Poppins","Inter","Segoe UI",sans-serif;
+  }
+
+  body{
+    margin:0;
+    background:var(--soft-bg);
+    color:var(--dark);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+  }
+
+  .banner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    max-width:1100px; /* compacted for balance */
+    padding:60px 60px;
+    box-sizing:border-box;
+  }
+
+  /* Left: logo + text */
+  .logo-block{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .logo-block svg{width:95px;height:95px;}
+  .logo-block span{
+    font-size:68px;
+    font-weight:800;
+    color:var(--blue);
+    letter-spacing:0.03em;
+    text-transform:lowercase;
+  }
+
+  /* Center: tagline */
+  .tagline{
+    text-align:center;
+  }
+  .tagline h1{
+    font-size:38px;
+    font-weight:700;
+    margin:0;
+    color:var(--dark);
+    letter-spacing:0.04em;
+  }
+  .tagline h1 span{color:var(--blue);}
+  .tagline p{
+    margin-top:10px;
+    font-size:18px;
+    color:var(--gray);
+  }
+
+  /* Right: QR */
+  .qr-block{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+  }
+  .qr-box{
+    background:var(--white);
+    border:3px solid var(--blue);
+    border-radius:16px;
+    padding:24px;
+    width:235px; /* bigger QR for outdoor visibility */
+    height:235px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 4px 14px rgba(0,81,255,0.15);
+  }
+  .mock-qr{width:100%;height:100%;}
+  .qr-text{
+    color:var(--blue);
+    font-size:16px;
+    font-weight:600;
+  }
+
+  @media(max-width:900px){
+    .banner{
+      flex-direction:column;
+      text-align:center;
+      gap:40px;
+      padding:40px 20px;
+    }
+    .logo-block{justify-content:center;}
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <!-- Left -->
+  <div class="logo-block">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" aria-label="MYFI logo">
+      <g fill="none" stroke="#0051FF" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M55 95 C70 65, 90 115, 100 85 C110 55, 130 75, 145 95" stroke-width="15"/>
+        <path d="M75 125 Q100 110 125 125" stroke-width="15"/>
+        <circle cx="100" cy="145" r="10" fill="#0051FF" stroke="none"/>
+      </g>
+    </svg>
+    <span>myfi</span>
+  </div>
+
+  <!-- Center -->
+  <div class="tagline">
+    <h1><span>SCAN</span> PAY CONNECT</h1>
+    <p>Instant Wi-Fi Access </p>
+<p>Scan and Get Online</p>
+  </div>
+
+  <!-- Right -->
+  <div class="qr-block">
+    <div class="qr-box">
+      <svg class="mock-qr" viewBox="0 0 100 100" aria-hidden="true">
+        <rect x="0" y="0" width="100" height="100" rx="6" fill="#fff"/>
+        <rect x="6" y="6" width="22" height="22" rx="2" fill="#000"/>
+        <rect x="72" y="6" width="22" height="22" rx="2" fill="#000"/>
+        <rect x="6" y="72" width="22" height="22" rx="2" fill="#000"/>
+        <g fill="#000">
+          <rect x="40" y="12" width="6" height="6"/>
+          <rect x="50" y="12" width="6" height="6"/>
+          <rect x="60" y="12" width="6" height="6"/>
+          <rect x="42" y="36" width="6" height="6"/>
+          <rect x="52" y="36" width="6" height="6"/>
+          <rect x="62" y="36" width="6" height="6"/>
+          <rect x="42" y="60" width="6" height="6"/>
+          <rect x="52" y="60" width="6" height="6"/>
+          <rect x="62" y="60" width="6" height="6"/>
+        </g>
+      </svg>
+    </div>
+    <div class="qr-text">Scan to connect via MYFI</div>
+  </div>
+</div>
+
+</body>
+</html>

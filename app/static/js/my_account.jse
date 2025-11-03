@@ -1,0 +1,114 @@
+// Fetch user data on page load
+    async function loadUserData() {
+      try {
+        // Call the correct API that returns everything
+        const response = await fetch('/api/my-account');
+        const data = await response.json();
+        
+        if (data.error) {
+          window.location.href = '/login';
+          return;
+        }
+        
+        // Display username
+        document.getElementById('username').textContent = data.username;
+        
+        // Display wallet balance
+        document.getElementById('walletBalance').textContent = data.wallet_balance || 0;
+        
+        // Display wallet status
+        const status = data.wallet_status;
+        const statusEl = document.getElementById('walletStatus');
+        
+        if (status === 'approved') {
+          statusEl.textContent = '✓ Active';
+          statusEl.style.color = '#90EE90';
+        } else if (status === 'pending') {
+          statusEl.textContent = '⏳ Pending Verification';
+          statusEl.style.color = '#FFD700';
+        } else if (status === 'rejected') {
+          statusEl.textContent = '✗ Payment Rejected';
+          statusEl.style.color = '#FF6B6B';
+        } else {
+          statusEl.textContent = 'No payment yet';
+          statusEl.style.color = '#CCC';
+        }
+        
+        // Display group info if user is in a group
+        if (data.group) {
+          document.getElementById('groupSection').style.display = 'block';
+          document.getElementById('noGroupSection').style.display = 'none';
+          
+          document.getElementById('groupName').textContent = data.group.name;
+          document.getElementById('groupCode').textContent = data.group.group_code || 'N/A';
+          document.getElementById('currentBalance').textContent = data.group.current_balance;
+          document.getElementById('targetAmount').textContent = data.group.target_amount;
+          document.getElementById('remaining').textContent = data.group.remaining;
+          
+          // Format expiry date
+          const expiryDate = new Date(data.group.week_end);
+          document.getElementById('expiryDate').textContent = expiryDate.toLocaleString();
+          
+          // Update progress bar
+          const percentage = (data.group.current_balance / data.group.target_amount) * 100;
+          document.getElementById('progressFill').style.width = percentage + '%';
+          document.getElementById('progressFill').textContent = Math.round(percentage) + '%';
+          
+          // Display members
+          const membersList = document.getElementById('membersList');
+          membersList.innerHTML = '';
+          data.members.forEach(member => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <span>${member.name}</span>
+              <span>KSh ${member.amount_contributed}</span>
+            `;
+            membersList.appendChild(li);
+          });
+          
+          // Display user's contribution
+          document.getElementById('myContribution').textContent = data.my_contribution;
+          
+        } else {
+          document.getElementById('groupSection').style.display = 'none';
+          document.getElementById('noGroupSection').style.display = 'block';
+        }
+        
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        alert('Failed to load account data');
+      }
+    }
+    
+    async function leaveGroup() {
+      if (!confirm('Are you sure you want to leave this group?')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/leave-group', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'}
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert(data.message || 'Failed to leave group');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to leave group');
+      }
+    }
+    
+    function logout() {
+      window.location.href = '/logout';
+    }
+    
+    // Load data on page load
+    loadUserData();
+    

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Join Group - MyFi</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #fff; color: #000; padding: 20px; }
+    h1 { color: #0051ff; }
+    h2 { color: #0051ff; font-size: 20px; margin-top: 30px; }
+    .container { max-width: 500px; margin: 0 auto; }
+    input, button { width: 100%; padding: 12px; margin: 8px 0; box-sizing: border-box; }
+    button { background: #0051ff; color: #fff; border: none; cursor: pointer; font-size: 16px; }
+    button:hover { background: #0040cc; }
+    .message { padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>MyFi Groups</h1>
+    
+    <h2>Create New Group</h2>
+    <form id="createForm">
+      <input type="text" name="group_name" placeholder="Group Name (e.g., Room 3A)" required>
+      <input type="text" name="your_name" placeholder="Your Name" required>
+      <input type="tel" name="phone" placeholder="Phone Number" required>
+      <button type="submit">Create Group</button>
+    </form>
+    
+    <h2>Join Existing Group</h2>
+    <form id="joinForm">
+
+      <input type="text" name="group_code" placeholder="Group Code" required>
+
+            <input type="text" name="your_name" placeholder="Your Name" required>
+      <input type="tel" name="phone" placeholder="Phone Number" required>
+      <button type="submit">Join Group</button>
+    </form>
+    
+    <div id="message"></div>
+  </div>
+
+  <script>
+    document.getElementById('createForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const code = 'GRP' + Math.random().toString(36).substr(2, 6).toUpperCase();
+      
+      const res = await fetch('/api/create-group', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          group_name: form.group_name.value,
+          member_name: form.your_name.value,
+          phone: form.phone.value,
+          group_code: code
+        })
+      });
+      
+      const data = await res.json();
+      showMessage(data.message, data.group_code);
+    };
+
+    document.getElementById('joinForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      
+      const res = await fetch('/api/join-group', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+
+        body: JSON.stringify({
+
+                    group_code: form.group_code.value,
+          member_name: form.your_name.value,
+          phone: form.phone.value
+        })
+      });
+      
+      const data = await res.json();
+      showMessage(data.message);
+    };
+
+    function showMessage(msg, code = '') {
+      const div = document.getElementById('message');
+      div.className = 'message success';
+      div.innerHTML = msg + (code ? `<br><strong>Group Code: ${code}</strong>` : '');
+    }
+  </script>
+</body>
+</html>

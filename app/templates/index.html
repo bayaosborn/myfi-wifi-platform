@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>MyFi – Quick Connect</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#0051ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MyFi">
+  <link rel="apple-touch-icon" href="/static/icon2.svg">
+  
+  <!-- External CSS -->
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/modal.css">
+    <link rel="stylesheet" href="/static/css/search/call-popup.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/notifications/cards.css') }}">
+  <!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+</head>
+
+<body>
+
+  <body data-open-auth-modal="{{ 'true' if open_auth_modal else 'false' }}"
+  data-error-message="{{ error_message if error_message else '' }}"
+  data-error-action="{{ error_action if error_action else '' }}" >
+
+  
+  <div><img src="/static/logo.svg" alt="MyFi" width="65"></div>
+  <div class="logo">myfi</div>
+
+  <div class="qr-placeholder">
+    {% if qr_image %}
+      <img src="data:image/png;base64,{{ qr_image }}" alt="Wi-Fi QR Code">
+    {% endif %}
+  </div>
+
+  <form id="scanForm" action="/generate_qr" method="post">
+    <button class="scan-btn" type="submit">Scan</button>
+  </form>
+
+<div id="message" class="message"></div>
+  
+  <div id="errorBanner" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#fee2e2; color:#991b1b; padding:15px 25px; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.1); z-index:9999; max-width:90%; text-align:center;">
+    <strong>⚠️ Error:</strong> <span id="errorText"></span>
+  </div>
+
+
+
+
+
+      {% include 'bottom_nav.html' %}
+
+
+    
+<!-- WhatsApp link I'm still working on it 
+<div class="WhatsApp-logo" style="margin-top:4rem;">
+  
+    <a href="https://chat.whatsapp.com/LRHRzolnSnR0tHmSijz33K?mode=wwt" target="_blank" rel="noopener noreferrer">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" margin-top="20px" color="#25D366" width="48" height="48" aria-label="WhatsApp logo">
+    <path fill="#25D366" d="M380.9 97.1C339 55.1 283.2 32 224.8 32c-114.9 0-208 93.1-208 208 0 36.6 9.5 72.4 27.6 104L0 480l139.2-43.3c30 16.4 63.9 25 98.5 25h.1c114.9 0 208-93.1 208-208 0-58.4-23.1-114.2-65.9-156.6zM224.8 438.6c-30.2 0-59.9-8.1-85.8-23.4l-6.1-3.6-82.6 25.7 27-80.3-3.9-6.3c-17.4-28.1-26.6-60.5-26.6-93.7 0-97.3 79.2-176.5 176.5-176.5 47.1 0 91.4 18.4 124.8 51.8 33.4 33.5 51.8 77.8 51.8 124.9-.1 97.3-79.3 176.4-176.5 176.4zm101.9-131.7c-5.6-2.8-33.1-16.3-38.2-18.2-5.1-1.9-8.8-2.8-12.6 2.8s-14.4 18.2-17.6 21.9c-3.2 3.7-6.5 4.2-12.1 1.4-33.1-16.5-54.8-29.4-76.5-66.6-5.8-10 5.8-9.3 16.5-30.9 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.6-30.3-17.3-41.4-4.5-10.8-9.1-9.3-12.6-9.5-3.2-.2-6.9-.2-10.6-.2s-9.7 1.4-14.7 6.9c-5.1 5.6-19.4 19-19.4 46.3s19.9 53.7 22.6 57.4c2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.6 66.6 13.9 10.7-1.6 33.1-13.5 37.8-26.5 4.7-13 4.7-24.1 3.2-26.5-1.5-2.4-5.1-3.8-10.7-6.6z"/>
+  </svg>
+      
+    </a>
+  
+  </div>
+
+-->
+
+    
+  
+  
+  <!-- AUTH MODAL -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <h2 id="authTitle">Sign Up</h2>
+      <form id="authForm">
+        <input type="text" id="usernameInput" name="username" placeholder="Username (no spaces)" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="tel" id="mpesaInput" name="mpesa_phone" placeholder="M-PESA (0712345678)" required>
+        <button type="submit" class="btn-blue" id="authSubmit">Sign Up</button>
+      </form>
+      <div class="toggle">
+        <span id="toggleText">Already have an account? <a id="toggleLink">Login</a></span>
+      </div>
+      <div id="authMessage" class="message"></div>
+    </div>
+  </div>
+
+  <!-- PAYMENT MODAL -->
+  <div id="paymentModal" class="modal">
+    <div class="modal-content">
+      <h2>Credit Wallet</h2>
+      <p>Send <strong>100 KSh</strong> to:</p>
+      <div class="copy-section">
+        <span id="mpesaNumber">0741641828</span>
+        <button type="button" class="btn-blue" style="width:auto; padding:8px 15px;" onclick="copyMpesa()">Copy</button>
+      </div>
+      <p style="font-size:14px;">After sending, click below:</p>
+      <button type="button" class="btn-blue" onclick="confirmPaymentSent()">I've Sent Payment</button>
+      <button type="button" class="btn-red" onclick="closePaymentModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- PENDING NOTICE -->
+  <div id="pendingNotice">
+    Payment pending verification...
+    <button onclick="dismissPending()" style="background:none;border:none;color:white;margin-left:10px;cursor:pointer;">✕</button>
+  </div>
+
+
+<!--
+    <!-- Global Socket for Incoming Calls (add before </body>) 
+{% if session.get('user_id') %}
+<div id="globalIncomingCall" class="global-call-popup" style="display:none;">
+    <div class="call-popup-content">
+        <div class="call-icon">📞</div>
+        <p class="call-label">Incoming Call</p>
+        <p id="globalCallerName" class="caller-name"></p>
+        <div class="call-buttons">
+            <button id="globalAcceptBtn" class="accept-btn">Accept</button>
+            <button id="globalRejectBtn" class="reject-btn">Reject</button>
+        </div>
+    </div>
+</div>
+
+
+    
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+
+    
+<script>
+  
+    // Global socket for incoming calls
+    const userId = "{{ session.get('user_id') }}";
+    
+    if (userId) {
+        const globalSocket = io({
+            transports: ['websocket', 'polling']
+        });
+        
+        let incomingCallData = null;
+        
+        globalSocket.on('connect', () => {
+            console.log('Global socket connected');
+        });
+        
+        globalSocket.on('incoming_call', (data) => {
+            console.log('Incoming call from:', data.caller_username);
+            incomingCallData = data;
+            
+            document.getElementById('globalCallerName').textContent = data.caller_username;
+            document.getElementById('globalIncomingCall').style.display = 'flex';
+            
+            // Browser notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Incoming Call from ' + data.caller_username, {
+                    body: 'Click to answer',
+                    icon: '/static/images/logo.png',
+                    requireInteraction: true
+                });
+            }
+        });
+        
+        document.getElementById('globalAcceptBtn').addEventListener('click', () => {
+            sessionStorage.setItem('pendingCall', JSON.stringify(incomingCallData));
+            window.location.href = '/search';
+        });
+        
+        document.getElementById('globalRejectBtn').addEventListener('click', () => {
+            globalSocket.emit('hang_up', { other_user_id: incomingCallData.caller_id });
+            document.getElementById('globalIncomingCall').style.display = 'none';
+            incomingCallData = null;
+        });
+    }
+</script>
+{% endif %}
+
+-->
+
+
+
+    
+
+  <script src="/static/js/main.js"></script>
+
+    <script>
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/serviceworker.js')
+          .then(reg => console.log('✅ Service Worker registered'))
+          .catch(err => console.log('❌ Service Worker error:', err));
+      });
+    }
+      </script>
+
+
+<!-- In-App Notification Cards Container -->
+{% if session.get('user_id') %}
+<div id="notificationCardsContainer" class="notification-cards-container"></div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/notifications/cards.css') }}">
+<script src="{{ url_for('static', filename='js/notifications/realtime.js') }}"></script>
+{% endif %}
+
+
+<!-- Debug Panel (remove in production) -
+{% if session.get('user_id') %}
+<div id="debugPanel" style="position:fixed; bottom:0; left:0; right:0; background:#000; color:#0f0; font-family:monospace; font-size:10px; padding:10px; max-height:150px; overflow-y:auto; z-index:99999; display:none;">
+    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+        <strong>Debug Console</strong>
+        <button onclick="document.getElementById('debugPanel').style.display='none'" style="background:#f00; color:#fff; border:none; padding:2px 8px;">Close</button>
+    </div>
+    <div id="debugLogs"></div>
+</div>
+<button onclick="document.getElementById('debugPanel').style.display='block'" style="position:fixed; bottom:10px; right:10px; z-index:99998; background:#0f0; color:#000; border:none; padding:10px; border-radius:50%;">🐛</button>
+
+<script>
+// Intercept console.log
+const debugLogs = document.getElementById('debugLogs');
+const originalLog = console.log;
+console.log = function(...args) {
+    originalLog.apply(console, args);
+    const log = document.createElement('div');
+    log.textContent = args.join(' ');
+    log.style.borderBottom = '1px solid #333';
+    log.style.padding = '2px 0';
+    debugLogs.appendChild(log);
+    debugLogs.scrollTop = debugLogs.scrollHeight;
+};
+</script>
+{% endif %}
+-->
+
+
+    
+    
+</body>
+</html>

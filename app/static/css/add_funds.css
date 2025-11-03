@@ -1,0 +1,139 @@
+/* ---------- Modal overlay (keep it centered) ---------- */
+#addMoneyModal {
+  display: none;
+  position: fixed;
+  inset: 0;                       /* top:0; right:0; bottom:0; left:0 */
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* ---------- Modal box: center contents and control spacing ---------- */
+#addMoneyModal .modal-box {
+  width: 75%;
+  max-width: 560px;
+  min-width: 320px;
+  max-height: 84vh;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 26px;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.22);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  overflow: auto;
+}
+
+/* ---------- Title: make it large and obvious ---------- */
+#addMoneyModal .modal-box h2 {
+  margin: 0;
+  color: #0051ff;
+  font-size: 24px;        /* clearly visible */
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.2px;
+}
+
+/* ---------- M-Pesa display text ---------- */
+#addMoneyModal #mpesaDisplay {
+  margin: 0;
+  color: #222;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* ---------- Input: large, centered, obvious ---------- */
+#addMoneyModal .input-box,
+#addMoneyModal input[type="number"] {
+  width: 68%;             /* centered, not full-width */
+  max-width: 420px;
+  padding: 14px 16px;
+  font-size: 18px;        /* readable input text */
+  border-radius: 12px;
+  border: 1.5px solid #d6d9de;
+  text-align: center;
+  outline: none;
+  transition: box-shadow .15s, border-color .15s;
+}
+
+#addMoneyModal .input-box:focus,
+#addMoneyModal input[type="number"]:focus {
+  border-color: #0051ff;
+  box-shadow: 0 6px 20px rgba(0,81,255,0.12);
+}
+
+/* ---------- Buttons: side-by-side, balanced, not stacked ---------- */
+/* target your existing classes btn-primary and btn-secondary */
+#addMoneyModal .btn-primary,
+#addMoneyModal .btn-secondary {
+  display: inline-block;
+  min-width: 140px;       /* clickable, but not huge */
+  padding: 11px 14px;
+  border-radius: 12px;
+  font-size: 16px;        /* readable button text */
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+  vertical-align: middle;
+  margin: 0 6px;          /* small gap between buttons */
+  box-sizing: border-box;
+}
+
+/* Add (blue) */
+#addMoneyModal .btn-primary {
+  background: linear-gradient(180deg,#0069ff 0%, #0051ff 100%);
+  color: #fff;
+}
+
+/* Cancel (red) */
+#addMoneyModal .btn-secondary {
+  background: linear-gradient(180deg,#e34b52 0%, #dc3545 100%);
+  color: #fff;
+}
+
+/* Hover states (subtle) */
+#addMoneyModal .btn-primary:hover { transform: translateY(-1px); filter: brightness(0.98); }
+#addMoneyModal .btn-secondary:hover { transform: translateY(-1px); filter: brightness(0.97); }
+
+/* Ensure buttons stay side-by-side on medium screens */
+@media (min-width: 420px) {
+  #addMoneyModal .modal-box .btn-primary,
+  #addMoneyModal .modal-box .btn-secondary {
+    width: 44%;
+  }
+}
+
+/* On narrow screens stack them vertically but large and full width */
+@media (max-width: 419px) {
+  #addMoneyModal .modal-box {
+    padding: 20px;
+    gap: 12px;
+  }
+  #addMoneyModal .btn-primary,
+  #addMoneyModal .btn-secondary {
+    display: block;
+    width: 100%;
+    margin: 6px 0;
+  }
+  #addMoneyModal .input-box,
+  #addMoneyModal input[type="number"] { width: 100%; }
+}
+
+/* ---------- Status message styling ---------- */
+#topupStatus,
+#paymentMsg {
+  width: 68%;
+  max-width: 420px;
+  font-size: 14px;
+  color: #333;
+  margin-top: 6px;
+}
