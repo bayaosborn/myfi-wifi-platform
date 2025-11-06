@@ -476,6 +476,53 @@ h1 {
   background: var(--danger);
 }
 
+
+
+
+
+/* -------- Mark as Read Button -------- */
+.mark-read-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #0051ff, #008bff);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 81, 255, 0.25);
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.mark-read-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 81, 255, 0.35);
+  background: linear-gradient(135deg, #0075ff, #0099ff);
+}
+
+.mark-read-btn:active {
+  transform: translateY(0);
+}
+
+.mark-read-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+
+
+
+
+
+
+
 /* ───────────────────────────
    RESPONSIVE
 ─────────────────────────── */

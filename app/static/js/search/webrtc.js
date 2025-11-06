@@ -1,8 +1,5 @@
 // WebRTC configuration
 
-
-
-
 const rtcConfig = {
     iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
@@ -29,7 +26,7 @@ function initSocket() {
     
     socket = io({
         transports: ['websocket', 'polling'],
-        forceNew: true  // Force new connection
+        forceNew: true
     });
     
     socket.on('connect', () => {
@@ -121,17 +118,13 @@ async function initiateCall(userId, username) {
     }
 }
 
-
-
-//New code added from here to save Contacts 
-
-
+// Handle incoming call
 async function handleIncomingCall(data) {
     console.log('📞 Incoming call from:', data.caller_username);
     
     currentCallUserId = data.caller_id;
     currentCallUsername = data.caller_username;
-    currentCallId = data.call_id;  // Store call ID
+    currentCallId = data.call_id;
     
     document.getElementById('incomingCallerName').textContent = data.caller_username;
     document.getElementById('incomingCallModal').style.display = 'flex';
@@ -139,9 +132,7 @@ async function handleIncomingCall(data) {
     window.incomingOffer = data.offer;
 }
 
-
-//Accept Call function 
-
+// Accept incoming call
 async function acceptCall() {
     console.log('✅ Accepting call');
     document.getElementById('incomingCallModal').style.display = 'none';
@@ -168,57 +159,6 @@ async function acceptCall() {
     }
 }
 
-
-
-
-/*
-// Handle incoming call
-async function handleIncomingCall(data) {
-    console.log('📞 Incoming call from:', data.caller_username);
-    
-    currentCallUserId = data.caller_id;
-    currentCallUsername = data.caller_username;
-    
-    document.getElementById('incomingCallerName').textContent = data.caller_username;
-    document.getElementById('incomingCallModal').style.display = 'flex';
-    
-    // Store the offer for when user accepts
-    window.incomingOffer = data.offer;
-}
-
-
-
-// Accept incoming call
-async function acceptCall() {
-    console.log('✅ Accepting call');
-    document.getElementById('incomingCallModal').style.display = 'none';
-    
-    const pc = await createPeerConnection(false);
-    if (!pc) return;
-    
-    try {
-        await pc.setRemoteDescription(new RTCSessionDescription(window.incomingOffer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        
-        console.log('📤 Sending answer');
-        socket.emit('answer_call', {
-            caller_id: currentCallUserId,
-            answer: answer
-        });
-        
-        showCallScreen('Connected to ' + currentCallUsername);
-        startCallTimer();
-    } catch (error) {
-        console.error('❌ Error accepting call:', error);
-    }
-}
-
-*/
-
-
-
-
 // Reject call
 function rejectCall() {
     console.log('❌ Rejecting call');
@@ -228,11 +168,10 @@ function rejectCall() {
     currentCallUsername = null;
 }
 
-
-
+// Handle call answered
 async function handleCallAnswered(data) {
     console.log('✅ Call answered');
-    currentCallId = data.call_id;  // Store call ID
+    currentCallId = data.call_id;
     
     try {
         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
@@ -242,26 +181,6 @@ async function handleCallAnswered(data) {
         console.error('❌ Error handling answer:', error);
     }
 }
-
-
-
-
-/*
-// Handle call answered
-async function handleCallAnswered(data) {
-    console.log('✅ Call answered');
-    try {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-        document.getElementById('callStatus').textContent = 'Connected';
-        startCallTimer();
-    } catch (error) {
-        console.error('❌ Error handling answer:', error);
-    }
-}
-*/
-
-
-
 
 // Handle ICE candidate
 async function handleIceCandidate(data) {
@@ -282,8 +201,7 @@ function handleCallEnded() {
     alert('Call ended');
 }
 
-
-
+// End call
 function endCall() {
     console.log('📴 Ending call');
     
@@ -322,69 +240,40 @@ function endCall() {
     
     hideCallScreen();
     
-    // Reload call history
-    // Reload call history
+    // Reload call history if function exists
     if (typeof loadCallHistory === 'function') {
         loadCallHistory();
     }
 }
 
-
-
-/*
-// End call
-function endCall() {
-    console.log('📴 Ending call');
-    
-    if (peerConnection) {
-        peerConnection.close();
-        peerConnection = null;
-    }
-    
-    if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-        localStream = null;
-    }
-    
-    if (callTimerInterval) {
-        clearInterval(callTimerInterval);
-        callTimerInterval = null;
-    }
-    
-    if (currentCallUserId) {
-        socket.emit('hang_up', { other_user_id: currentCallUserId });
-    }
-    
-    currentCallUserId = null;
-    currentCallUsername = null;
-    
-    hideCallScreen();
-}
-*/
-
-
-
-
-
-
-
 // Show call screen
 function showCallScreen(status) {
-    document.getElementById('callStatus').textContent = status;
-    document.getElementById('callUsername').textContent = currentCallUsername;
-    document.getElementById('callScreen').style.display = 'block';
-    document.querySelector('.search-section').style.display = 'none';
-    document.getElementById('searchResults').style.display = 'none';
+    const callScreen = document.getElementById('callScreen');
+    const searchSection = document.querySelector('.search-section');
+    const searchResults = document.getElementById('searchResults');
+    
+    if (callScreen) {
+        document.getElementById('callStatus').textContent = status;
+        document.getElementById('callUsername').textContent = currentCallUsername;
+        callScreen.style.display = 'block';
+    }
+    
+    if (searchSection) searchSection.style.display = 'none';
+    if (searchResults) searchResults.style.display = 'none';
 }
 
 // Hide call screen
 function hideCallScreen() {
-    document.getElementById('callScreen').style.display = 'none';
-    document.querySelector('.search-section').style.display = 'block';
+    const callScreen = document.getElementById('callScreen');
+    const searchSection = document.querySelector('.search-section');
+    
+    if (callScreen) callScreen.style.display = 'none';
+    if (searchSection) searchSection.style.display = 'block';
+    
     document.getElementById('callTimer').textContent = '00:00';
 }
 
-
+// Start call timer
 function startCallTimer() {
     callStartTime = Date.now();
     callDuration = 0;
@@ -398,28 +287,128 @@ function startCallTimer() {
     }, 1000);
 }
 
+// ============================================
+// UI EVENT HANDLERS (from call-ui.js)
+// ============================================
 
-
-
-/*
-// Call timer
-function startCallTimer() {
-    callStartTime = Date.now();
-    callTimerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
-        const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-        const seconds = (elapsed % 60).toString().padStart(2, '0');
-        document.getElementById('callTimer').textContent = `${minutes}:${seconds}`;
-    }, 1000);
+async function searchUser() {
+    const username = document.getElementById('searchInput').value.trim();
+    
+    if (!username) {
+        alert('Enter a username');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/search-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+        
+        const data = await response.json();
+        
+        if (data.found) {
+            document.getElementById('foundUsername').textContent = data.user.username;
+            document.getElementById('onlineStatus').textContent = data.user.online ? '🟢 Online' : '⚪ Offline';
+            document.getElementById('callBtn').dataset.userId = data.user.id;
+            document.getElementById('searchResults').style.display = 'block';
+            
+            console.log('✅ Found user:', data.user.username, 'ID:', data.user.id, 'Type:', typeof data.user.id);
+            
+            // Set current user for contacts
+            if (typeof window.setCurrentSearchedUser === 'function') {
+                window.setCurrentSearchedUser(data.user);
+            }
+        } else {
+            alert(data.message || 'User not found');
+            document.getElementById('searchResults').style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Search error:', error);
+        alert('Error searching user');
+    }
 }
 
-*/
+// Mute/Speaker controls
+function toggleMute() {
+    if (localStream) {
+        const audioTrack = localStream.getAudioTracks()[0];
+        audioTrack.enabled = !audioTrack.enabled;
+        const muteBtn = document.getElementById('muteBtn');
+        if (muteBtn) {
+            muteBtn.textContent = audioTrack.enabled ? 'Mute' : 'Unmute';
+        }
+    }
+}
 
+function toggleSpeaker() {
+    alert('Speaker control - implement based on device');
+}
 
+// ============================================
+// ATTACH EVENT HANDLERS ON PAGE LOAD
+// ============================================
 
-
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Initializing search page');
+    console.log('🚀 Initializing webrtc.js');
     initSocket();
+    
+    // Search functionality
+    const searchBtn = document.getElementById('searchBtn');
+    const searchInput = document.getElementById('searchInput');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', searchUser);
+        console.log('✅ Search button handler attached');
+    }
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchUser();
+        });
+        console.log('✅ Search input handler attached');
+    }
+    
+    // Call button
+    const callBtn = document.getElementById('callBtn');
+    if (callBtn) {
+        callBtn.addEventListener('click', () => {
+            const userId = callBtn.dataset.userId;
+            const username = document.getElementById('foundUsername').textContent;
+            initiateCall(userId, username);
+        });
+        console.log('✅ Call button handler attached');
+    }
+    
+    // Hang up button
+    const hangUpBtn = document.getElementById('hangUpBtn');
+    if (hangUpBtn) {
+        hangUpBtn.addEventListener('click', endCall);
+        console.log('✅ Hang up button handler attached');
+    }
+    
+    // Accept/Reject call buttons
+    const acceptBtn = document.getElementById('acceptCallBtn');
+    const rejectBtn = document.getElementById('rejectCallBtn');
+    if (acceptBtn) {
+        acceptBtn.addEventListener('click', acceptCall);
+        console.log('✅ Accept call button handler attached');
+    }
+    if (rejectBtn) {
+        rejectBtn.addEventListener('click', rejectCall);
+        console.log('✅ Reject call button handler attached');
+    }
+    
+    // Mute/Speaker buttons
+    const muteBtn = document.getElementById('muteBtn');
+    const speakerBtn = document.getElementById('speakerBtn');
+    if (muteBtn) {
+        muteBtn.addEventListener('click', toggleMute);
+        console.log('✅ Mute button handler attached');
+    }
+    if (speakerBtn) {
+        speakerBtn.addEventListener('click', toggleSpeaker);
+        console.log('✅ Speaker button handler attached');
+    }
 });
+
+console.log('✅ webrtc.js loaded');

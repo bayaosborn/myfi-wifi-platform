@@ -6,6 +6,9 @@
     <title>Search & Call - MyFi</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/search/search.css') }}">
+
+
+    
 </head>
 <body>
     <div class="container">
@@ -53,7 +56,10 @@
                 <button id="speakerBtn">Speaker</button>
             </div>
         </div>
-        
+
+
+
+        <!--
         <!-- Incoming Call Modal -->
         <div id="incomingCallModal" style="display:none;">
             <div class="modal-content">
@@ -63,6 +69,12 @@
                 <button id="rejectCallBtn" class="reject-btn">Reject</button>
             </div>
         </div>
+
+
+
+
+
+        
         
         <!-- Save Contact Modal -->
         <div id="saveContactModal" class="modal" style="display:none;">
@@ -81,9 +93,19 @@
     <!-- Socket.IO -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     
+    
     <!-- Our Scripts -->
     <script src="{{ url_for('static', filename='js/search/webrtc.js') }}"></script>
+
+  <!--  
     <script src="{{ url_for('static', filename='js/search/call-ui.js') }}"></script>
+    -->
+
+
+    
     <script src="{{ url_for('static', filename='js/search/contacts.js') }}"></script>
+
+
+    
 </body>
 </html>

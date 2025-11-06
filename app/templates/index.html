@@ -14,7 +14,7 @@
   <!-- External CSS -->
   <link rel="stylesheet" href="/static/css/main.css">
   <link rel="stylesheet" href="/static/css/modal.css">
-    <link rel="stylesheet" href="/static/css/search/call-popup.css">
+    <link rel="stylesheet" href="/static/css/search/search.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications/cards.css') }}">
   <!-- Supabase JS Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -183,6 +183,60 @@
 
 
 
+
+
+
+
+    <!-- Call Screen (hidden initially) -->
+        <div id="callScreen" style="display:none;">
+            <div class="call-ui">
+                <h2 id="callStatus">Calling...</h2>
+                <h2 id="callUsername"></h2>
+                <p id="callTimer">00:00</p>
+                <button id="hangUpBtn" class="hang-up-btn">End Call</button>
+                <button id="muteBtn">Mute</button>
+                <button id="speakerBtn">Speaker</button>
+            </div>
+        </div>
+
+
+
+    
+
+
+<!-- Incoming Call Modal -->
+        <div id="incomingCallModal" style="display:none;">
+            <div class="modal-content">
+                <h2>Incoming Call</h2>
+                <p id="incomingCallerName"></p>
+                <button id="acceptCallBtn" class="accept-btn">Accept</button>
+                <button id="rejectCallBtn" class="reject-btn">Reject</button>
+            </div>
+        </div>
+
+
+
+  <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- Our Scripts -->
+    <script src="{{ url_for('static', filename='js/search/webrtc.js') }}"></script>
+
+
+
+    
+    <script src="{{ url_for('static', filename='js/search/contacts.js') }}"></script>
+
+
+
+
+
+    
+
+
+    
+
+  
     
 
   <script src="/static/js/main.js"></script>
@@ -235,6 +289,14 @@ console.log = function(...args) {
 {% endif %}
 -->
 
+
+
+
+
+
+
+
+    
 
     
     

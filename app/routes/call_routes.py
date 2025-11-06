@@ -82,6 +82,23 @@ def search_user():
         return jsonify({"error": str(e)}), 500
 
 
+
+
+#I want to ping the search page so we avoid cold starts from renders inactivity policy. 6/11/2022
+
+@call_bp.route('/keep-alive')
+def keep_alive():
+    """Keep server awake on Render free tier"""
+    return jsonify({
+        "status": "alive",
+        "timestamp": datetime.utcnow().isoformat(),
+        "active_users": len(active_users)
+    }), 200
+
+
+
+
+
 @call_bp.route('/api/contacts/save', methods=['POST'])
 def save_contact():
     """Save a contact with optional custom name"""
@@ -132,6 +149,11 @@ def save_contact():
         return jsonify({"error": str(e)}), 500
 
 
+
+
+
+#reverting to prevoous get contacts function. Intended change looks for different table. 7/11/2025
+
 @call_bp.route('/api/contacts', methods=['GET'])
 def get_contacts():
     """Get user's saved contacts"""
@@ -172,6 +194,112 @@ def get_contacts():
     except Exception as e:
         print(f"❌ Get contacts error: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+#Caching contacts to user. Prior code was laggy and contacts didn't appear unless you hardly refresh page. 6/11/2025
+''''
+@call_bp.route('/api/contacts', methods=['GET'])
+def get_contacts():
+    """Get user's saved contacts - OPTIMIZED"""
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Not logged in"}), 401
+    
+    import time
+    start = time.time()
+    
+    try:
+        # Use optimized SQL function (1 query instead of N+1)
+        result = supabase.rpc('get_user_contacts', {'p_user_id': user_id}).execute()
+        
+        query_time = (time.time() - start) * 1000
+        print(f"⏱️ DB query time: {query_time:.2f}ms")
+        
+        # Enrich with online status (from memory, super fast)
+        enriched_contacts = []
+        for contact in result.data:
+            enriched_contacts.append({
+                'id': contact['id'],
+                'user_id': contact['contact_user_id'],
+                'username': contact['username'],
+                'custom_name': contact['custom_name'],
+                'online': contact['contact_user_id'] in active_users
+            })
+        
+        total_time = (time.time() - start) * 1000
+        print(f"⏱️ Total time: {total_time:.2f}ms for {len(enriched_contacts)} contacts")
+        
+        return jsonify({
+            "success": True,
+            "contacts": enriched_contacts
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Get contacts error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+'''
+
+
+
+
+
+
+
+
+#this code below I'm adding cache of contacts to user so it's depracated. New code above. 6/11/2025
+''''
+@call_bp.route('/api/contacts', methods=['GET'])
+def get_contacts():
+    """Get user's saved contacts"""
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Not logged in"}), 401
+    
+    try:
+        # Get contacts with user info
+        contacts = supabase.table('contacts')\
+            .select('id, contact_user_id, custom_name, saved_at')\
+            .eq('user_id', user_id)\
+            .order('saved_at', desc=True)\
+            .execute()
+        
+        # Enrich with user details and online status
+        enriched_contacts = []
+        for contact in contacts.data:
+            user_info = supabase.table('user')\
+                .select('username')\
+                .eq('id', contact['contact_user_id'])\
+                .execute()
+            
+            if user_info.data:
+                enriched_contacts.append({
+                    'id': contact['id'],
+                    'user_id': contact['contact_user_id'],
+                    'username': user_info.data[0]['username'],
+                    'custom_name': contact['custom_name'],
+                    'online': contact['contact_user_id'] in active_users
+                })
+        
+        return jsonify({
+            "success": True,
+            "contacts": enriched_contacts
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Get contacts error: {e}")
+        return jsonify({"error": str(e)}), 500
+'''
+
+
+
+
+        
 
 
 @call_bp.route('/api/contacts/<int:contact_id>', methods=['DELETE'])
