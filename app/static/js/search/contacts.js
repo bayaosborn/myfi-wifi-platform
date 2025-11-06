@@ -1,14 +1,117 @@
-// Contacts management
+// Contacts management with caching
 
 let currentSearchedUser = null;
 
-// Load saved contacts on page load
+const CONTACTS_CACHE_KEY = 'myfi_contacts_cache';
+const CACHE_DURATION = 3 * 60 * 1000; // 3 minutes
+
 document.addEventListener('DOMContentLoaded', () => {
     loadSavedContacts();
     loadCallHistory();
 });
 
-// Save button handler
+async function loadSavedContacts() {
+    const contactsList = document.getElementById('contactsList');
+    
+    // Try cache first
+    const cached = localStorage.getItem(CONTACTS_CACHE_KEY);
+    if (cached) {
+        try {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < CACHE_DURATION) {
+                console.log('📦 Using cached contacts');
+                renderContactsList(data, contactsList);
+                
+                // Update in background
+                fetchContactsInBackground();
+                return;
+            }
+        } catch (e) {
+            localStorage.removeItem(CONTACTS_CACHE_KEY);
+        }
+    }
+    
+    // Fetch fresh
+    await fetchAndRenderContacts(contactsList);
+}
+
+async function fetchAndRenderContacts(contactsList) {
+    try {
+        const response = await fetch('/api/contacts');
+        const data = await response.json();
+        
+        if (data.success && data.contacts) {
+            // Cache it
+            localStorage.setItem(CONTACTS_CACHE_KEY, JSON.stringify({
+                data: data.contacts,
+                timestamp: Date.now()
+            }));
+            
+            renderContactsList(data.contacts, contactsList);
+        } else {
+            contactsList.innerHTML = '<p style="color:#666;">No saved contacts yet</p>';
+        }
+    } catch (error) {
+        console.error('Load contacts error:', error);
+        contactsList.innerHTML = '<p style="color:#666;">No saved contacts yet</p>';
+    }
+}
+
+function renderContactsList(contacts, contactsList) {
+    if (contacts.length > 0) {
+        contactsList.innerHTML = contacts.map(contact => `
+            <div class="contact-card" data-user-id="${contact.user_id}">
+                <div class="contact-info">
+                    <strong>${contact.custom_name || contact.username}</strong>
+                    ${contact.custom_name ? `<span style="color:#666; font-size:12px;">(${contact.username})</span>` : ''}
+                    <span class="status-indicator">${contact.online ? '🟢 Online' : '⚪ Offline'}</span>
+                </div>
+                <div class="contact-actions">
+                    <button class="contact-call-btn" onclick="callContact(${contact.user_id}, '${(contact.custom_name || contact.username).replace(/'/g, "\\'")}')">📞</button>
+                    <button class="contact-delete-btn" onclick="deleteContact(${contact.id})">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        contactsList.innerHTML = '<p style="color:#666;">No saved contacts yet</p>';
+    }
+}
+
+async function fetchContactsInBackground() {
+    try {
+        const response = await fetch('/api/contacts');
+        const data = await response.json();
+        
+        if (data.success && data.contacts) {
+            localStorage.setItem(CONTACTS_CACHE_KEY, JSON.stringify({
+                data: data.contacts,
+                timestamp: Date.now()
+            }));
+        }
+    } catch (e) {
+        // Silent fail
+    }
+}
+
+window.callContact = function(userId, displayName) {
+    initiateCall(userId, displayName);
+};
+
+window.deleteContact = async function(contactId) {
+    if (!confirm('Remove this contact?')) return;
+    
+    try {
+        const response = await fetch(`/api/contacts/${contactId}`, { method: 'DELETE' });
+        
+        if (response.ok) {
+            localStorage.removeItem(CONTACTS_CACHE_KEY);
+            loadSavedContacts();
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+    }
+};
+
 document.getElementById('saveBtn').addEventListener('click', () => {
     if (!currentSearchedUser) return;
     
@@ -17,7 +120,6 @@ document.getElementById('saveBtn').addEventListener('click', () => {
     document.getElementById('saveContactModal').style.display = 'flex';
 });
 
-// Confirm save
 document.getElementById('confirmSaveBtn').addEventListener('click', async () => {
     const customName = document.getElementById('customNameInput').value.trim();
     
@@ -39,7 +141,7 @@ document.getElementById('confirmSaveBtn').addEventListener('click', async () => 
             document.getElementById('saveBtn').textContent = '✅ Saved';
             document.getElementById('saveBtn').disabled = true;
             
-            // Reload contacts list
+            localStorage.removeItem(CONTACTS_CACHE_KEY);
             loadSavedContacts();
         } else {
             alert('Failed to save contact');
@@ -50,64 +152,10 @@ document.getElementById('confirmSaveBtn').addEventListener('click', async () => 
     }
 });
 
-// Cancel save
 document.getElementById('cancelSaveBtn').addEventListener('click', () => {
     document.getElementById('saveContactModal').style.display = 'none';
 });
 
-// Load saved contacts
-async function loadSavedContacts() {
-    try {
-        const response = await fetch('/api/contacts');
-        const data = await response.json();
-        
-        const contactsList = document.getElementById('contactsList');
-        
-        if (data.success && data.contacts.length > 0) {
-            contactsList.innerHTML = data.contacts.map(contact => `
-                <div class="contact-card" data-user-id="${contact.user_id}">
-                    <div class="contact-info">
-                        <strong>${contact.custom_name || contact.username}</strong>
-                        ${contact.custom_name ? `<span style="color:#666; font-size:12px;">(${contact.username})</span>` : ''}
-                        <span class="status-indicator">${contact.online ? '🟢 Online' : '⚪ Offline'}</span>
-                    </div>
-                    <div class="contact-actions">
-                        <button class="contact-call-btn" onclick="callContact(${contact.user_id}, '${contact.custom_name || contact.username}')">📞</button>
-                        <button class="contact-delete-btn" onclick="deleteContact(${contact.id})">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-        } else {
-            contactsList.innerHTML = '<p style="color:#666;">No saved contacts yet</p>';
-        }
-    } catch (error) {
-        console.error('Load contacts error:', error);
-    }
-}
-
-// Call a saved contact
-window.callContact = function(userId, displayName) {
-    initiateCall(userId, displayName);
-};
-
-// Delete contact
-window.deleteContact = async function(contactId) {
-    if (!confirm('Remove this contact?')) return;
-    
-    try {
-        const response = await fetch(`/api/contacts/${contactId}`, {
-            method: 'DELETE'
-        });
-        
-        if (response.ok) {
-            loadSavedContacts();
-        }
-    } catch (error) {
-        console.error('Delete error:', error);
-    }
-};
-
-// Load call history
 async function loadCallHistory() {
     try {
         const response = await fetch('/api/call-history');
@@ -137,11 +185,9 @@ async function loadCallHistory() {
     }
 }
 
-// Update current searched user (called from call-ui.js)
 window.setCurrentSearchedUser = function(user) {
     currentSearchedUser = user;
     
-    // Update save button state
     if (user.is_saved) {
         document.getElementById('saveBtn').textContent = '✅ Saved';
         document.getElementById('saveBtn').disabled = true;

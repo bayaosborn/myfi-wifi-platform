@@ -11,7 +11,15 @@
   <link rel="stylesheet" href="/static/css/add_funds.css">
     <link rel="stylesheet" href="/static/css/myaccountButtons.css">
   
-    
+    <link rel="stylesheet" href="/static/css/notifications/preview.css">
+
+  <link rel="stylesheet" href="/static/css/global/incomingCallModal.css">
+
+  <link rel="stylesheet" href="/static/css/search/search.css">
+
+
+  
+  
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -32,6 +40,50 @@
   </div>
     
 
+
+
+
+        <!-- Call Screen (hidden initially) -->
+        <div id="callScreen" style="display:none;">
+            <div class="call-ui">
+                <h2 id="callStatus">Calling...</h2>
+                <h2 id="callUsername"></h2>
+                <p id="callTimer">00:00</p>
+                <button id="hangUpBtn" class="hang-up-btn">End Call</button>
+                <button id="muteBtn">Mute</button>
+                <button id="speakerBtn">Speaker</button>
+            </div>
+        </div>
+
+
+
+    
+
+
+<!-- Incoming Call Modal -->
+        <div id="incomingCallModal" style="display:none;">
+            <div class="modal-content">
+                <h2>Incoming Call</h2>
+                <p id="incomingCallerName"></p>
+                <button id="acceptCallBtn" class="accept-btn">Accept</button>
+                <button id="rejectCallBtn" class="reject-btn">Reject</button>
+            </div>
+        </div>
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+    
 
 <!-- Wallet Card 2 -->
 <div class="wallet-card">
@@ -178,6 +230,221 @@ function formatTime(timestamp) {
 }
 </script>
 
+
+
+<!--
+<style> 
+
+.notification-preview,
+.notification-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(245,250,255,0.97));
+  border: 1px solid rgba(0,81,255,0.1);
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 6px 20px rgba(0,81,255,0.08);
+  backdrop-filter: blur(10px);
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.notification-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,81,255,0.15);
+}
+
+/* 🔹 Keep emoji natural & big enough */
+.notification-card img,
+.notification-card .emoji {
+  font-size: 1.5em;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* 🔹 Text area next to emoji */
+.notification-content {
+  flex: 1;
+}
+
+.notif-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 15px;
+  color: #000; /* ✅ Reverted to black text so emojis stay colorful */
+}
+
+.notif-message {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.notif-time {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* 🔹 Category tags stay colorful */
+.notif-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.view-all-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #0051ff;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.view-all-link:hover {
+  color: #0075ff;
+  text-decoration: underline;
+  }
+
+  </style>
+-->
+    
+<!--
+<style>
+.notification-preview {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(245, 250, 255, 0.97));
+    border: 1px solid rgba(0, 81, 255, 0.12);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 6px 20px rgba(0, 81, 255, 0.08);
+    backdrop-filter: blur(10px);
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.notification-preview:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 81, 255, 0.15);
+}
+
+/* Keep emoji vibrant and slightly larger */
+.notification-preview .emoji,
+.notification-preview img {
+    font-size: 1.4em;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+/* Text section next to the emoji */
+.notification-content {
+    flex: 1;
+}
+
+.notif-title {
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 15px;
+    background: linear-gradient(90deg, #0051ff, #008bff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.notif-message {
+    color: #333;
+    font-size: 14px;
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.notif-time {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.view-all-link {
+    display: inline-block;
+    margin-top: 12px;
+    color: #0051ff;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.view-all-link:hover {
+    color: #0075ff;
+    text-decoration: underline;
+}
+</style>
+
+-->
+    
+
+<!--
+  <style>
+.notification-preview {
+    background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(240,245,255,0.95));
+    border: 1px solid rgba(0,81,255,0.12);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 6px 20px rgba(0,81,255,0.08);
+    backdrop-filter: blur(10px);
+    transition: all 0.25s ease;
+}
+
+.notification-preview:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,81,255,0.15);
+}
+
+.notif-title {
+    font-weight: 600;
+    margin-bottom: 6px;
+    background: linear-gradient(90deg, #0051ff, #008bff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 15px;
+}
+
+.notif-message {
+    color: #333;
+    font-size: 14px;
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.notif-time {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.view-all-link {
+    display: inline-block;
+    margin-top: 12px;
+    color: #0051ff;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.view-all-link:hover {
+    color: #0075ff;
+    text-decoration: underline;
+}
+  </style>
+
+-->
+    
+
+    <!--
 <style>
 .notification-preview {
     background: #1a1a1a;
@@ -215,7 +482,7 @@ function formatTime(timestamp) {
     text-decoration: underline;
 }
 </style>
-    
+ -->   
 
 
 
@@ -747,6 +1014,38 @@ function copyTillNumber() {
   <script src="/static/js/add_funds.js">
    </script>
 <script src="/static/js/manual_payment.js"></script>
+
+
+  
+
+
+
+  
+      
+        
+
+
+  <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- Our Scripts -->
+    <script src="{{ url_for('static', filename='js/search/webrtc.js') }}"></script>
+
+
+
+    
+    <script src="{{ url_for('static', filename='js/search/contacts.js') }}"></script>
+
+
+
+
+
+
+
+
+
+
+  
   
 </body>
   </html>

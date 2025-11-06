@@ -414,7 +414,7 @@ def send_notification():
             return jsonify({"message": "Title and message required"}), 400
         
         # Import the function from notifications
-        from routes.notifications import send_notification_to_user
+        from app.routes.notifications import send_notification_to_user
         
         if target == 'all':
             # Send to all users
