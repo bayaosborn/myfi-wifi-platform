@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete All Contacts</title>
+
+    <style>
+
+        /* --------------------------------------------------
+        MYFI DELETE ALL CONTACTS BUTTON
+        -------------------------------------------------- */
+        .delete-all-btn {
+            display: block;
+            margin: 24px auto 0 auto;      /* centered, spacing */
+            padding: 14px 20px;
+
+            background: #ff4d4f;           /* MyFi soft red */
+            color: white;
+            border: none;
+            border-radius: 14px;
+
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+
+            cursor: pointer;
+            width: 90%;                     /* looks correct on all phones */
+            max-width: 320px;               /* prevents stretching */
+            transition: 0.25s ease;
+            box-shadow: 0 4px 10px rgba(255, 77, 79, 0.25);
+        }
+
+        .delete-all-btn:hover {
+            background: #ff3335;
+            box-shadow: 0 6px 14px rgba(255, 77, 79, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .delete-all-btn:active {
+            transform: scale(0.98);
+        }
+
+    </style>
+</head>
+<body>
+
+    <button class="delete-all-btn" onclick="deleteAllContacts()">
+        Delete All Contacts
+    </button>
+
+    <script>
+        async function deleteAllContacts() {
+            // First confirmation
+            const first = confirm("Are you sure you want to delete ALL contacts?");
+            if (!first) return;
+
+            // Second confirmation
+            const second = confirm("This action cannot be undone. Delete ALL contacts?");
+            if (!second) return;
+
+            try {
+                const response = await fetch('/delete_all_contacts', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`Deleted ${data.deleted_count} contacts.`);
+
+                    // Optional UI resets
+                    if (typeof updateContactsCount === 'function') {
+                        updateContactsCount(0);
+                    }
+                    if (typeof showEmptyCard === 'function') {
+                        showEmptyCard();
+                    }
+                } else {
+                    alert("Delete failed: " + data.error);
+                }
+
+            } catch (error) {
+                alert("Server error.");
+                console.error(error);
+            }
+
+            location.reload();
+        }
+    </script>
+
+</body>
+</html>

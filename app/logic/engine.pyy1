@@ -1,0 +1,231 @@
+"""
+Enhanced Logic Engine with Multi-Domain Integration
+"""
+
+from groq import Groq
+import os
+import csv
+import io
+from .prompts import SYSTEM_PROMPT
+
+class LogicEngine:
+    def __init__(self):
+        api_key = os.getenv('GROQ_API_KEY')
+        if not api_key:
+            raise ValueError("GROQ_API_KEY not found")
+        
+        self.groq = Groq(api_key=api_key)
+        self.model = 'llama-3.3-70b-versatile'
+        self.contacts = []
+        self.conversation_history = []  # NEW: Store context
+        
+        print("✓ Logic engine initialized")
+    
+    def load_contacts(self, csv_content: str) -> int:
+        """Load contacts from CSV"""
+        self.contacts = []
+        csv_file = io.StringIO(csv_content)
+        reader = csv.DictReader(csv_file)
+        
+        for row in reader:
+            contact = {
+                'name': row.get('username', row.get('name', 'Unknown')),
+                'phone': row.get('phone', ''),
+                'email': row.get('email', ''),
+                'tags': row.get('tags', '').split(',') if row.get('tags') else [],
+                'notes': row.get('notes', ''),
+                'last_contacted': row.get('last_contacted', None)  # NEW
+            }
+            self.contacts.append(contact)
+        
+        print(f"✓ Loaded {len(self.contacts)} contacts")
+        return len(self.contacts)
+    
+    def get_contacts_summary(self) -> str:
+        """Enhanced contacts summary with patterns"""
+        if not self.contacts:
+            return "No contacts available."
+        
+        # Group by tags
+        by_tags = {}
+        for contact in self.contacts:
+            for tag in contact['tags'] if contact['tags'] else ['untagged']:
+                if tag not in by_tags:
+                    by_tags[tag] = []
+                by_tags[tag].append(contact)
+        
+        summary = f"📊 CONTACT SUMMARY\n"
+        summary += f"Total: {len(self.contacts)} contacts\n\n"
+        
+        # Group summary
+        summary += "📁 BY TAG:\n"
+        for tag, contacts in by_tags.items():
+            summary += f"- {tag.title()}: {len(contacts)} contacts\n"
+        
+        summary += "\n📋 FULL LIST:\n"
+        for i, contact in enumerate(self.contacts, 1):
+            tags_str = ', '.join(contact['tags']) if contact['tags'] else 'no tags'
+            summary += f"{i}. **{contact['name']}**"
+            
+            if contact['phone']:
+                summary += f" ({contact['phone']})"
+            
+            summary += f" | Tags: {tags_str}"
+            
+            if contact['notes']:
+                summary += f" | Notes: {contact['notes']}"
+            
+            if contact.get('last_contacted'):
+                summary += f" | Last contact: {contact['last_contacted']}"
+            
+            summary += "\n"
+        
+        return summary
+    
+    def chat(self, message: str, user_context: dict = None) -> str:
+        """
+        Enhanced chat with context awareness
+        
+        user_context can include:
+        - location: User's current location
+        - time: Current time/day
+        - recent_activity: What user was just doing
+        - mood: Inferred from behavior (future)
+        """
+        contacts_context = self.get_contacts_summary()
+        
+        # Build context-aware system message
+        context_additions = ""
+        if user_context:
+            context_additions = "\n\n📍 CURRENT CONTEXT:\n"
+            if user_context.get('location'):
+                context_additions += f"- Location: {user_context['location']}\n"
+            if user_context.get('time'):
+                context_additions += f"- Time: {user_context['time']}\n"
+            if user_context.get('recent_activity'):
+                context_additions += f"- Recent activity: {user_context['recent_activity']}\n"
+        
+        # Build messages
+        messages = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT
+            },
+            {
+                "role": "system",
+                "content": f"{contacts_context}{context_additions}"
+            }
+        ]
+        
+        # Add conversation history (last 5 messages)
+        for hist in self.conversation_history[-5:]:
+            messages.append(hist)
+        
+        # Add current message
+        messages.append({
+            "role": "user",
+            "content": message
+        })
+        
+        # Call Groq API
+        try:
+            response = self.groq.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=500
+            )
+            
+            assistant_response = response.choices[0].message.content
+            
+            # Save to history
+            self.conversation_history.append({"role": "user", "content": message})
+            self.conversation_history.append({"role": "assistant", "content": assistant_response})
+            
+            return assistant_response
+        
+        except Exception as e:
+            print(f"Groq API error: {e}")
+            return "I'm having trouble right now. Please try again.\n\n/Created by Osborn Baya"
+    
+    def analyze_patterns(self) -> dict:
+        """
+        NEW: Analyze contact patterns for insights
+        """
+        patterns = {
+            'total_contacts': len(self.contacts),
+            'by_tag': {},
+            'missing_data': {
+                'no_phone': 0,
+                'no_email': 0,
+                'no_tags': 0
+            },
+            'insights': []
+        }
+        
+        # Count by tags
+        for contact in self.contacts:
+            if not contact['tags']:
+                patterns['missing_data']['no_tags'] += 1
+            
+            for tag in contact['tags']:
+                patterns['by_tag'][tag] = patterns['by_tag'].get(tag, 0) + 1
+            
+            if not contact['phone']:
+                patterns['missing_data']['no_phone'] += 1
+            
+            if not contact['email']:
+                patterns['missing_data']['no_email'] += 1
+        
+        # Generate insights
+        if patterns['missing_data']['no_phone'] > 0:
+            patterns['insights'].append(
+                f"{patterns['missing_data']['no_phone']} contacts missing phone numbers"
+            )
+        
+        most_common_tag = max(patterns['by_tag'].items(), key=lambda x: x[1]) if patterns['by_tag'] else None
+        if most_common_tag:
+            patterns['insights'].append(
+                f"Most contacts are tagged as '{most_common_tag[0]}' ({most_common_tag[1]} contacts)"
+            )
+        
+        return patterns
+    
+    def search_contacts(self, query: str) -> list:
+        """Enhanced contact search"""
+        query_lower = query.lower()
+        results = []
+        
+        for contact in self.contacts:
+            score = 0
+            
+            # Name match (highest priority)
+            if query_lower in contact['name'].lower():
+                score += 10
+                results.append((contact, score))
+                continue
+            
+            # Phone match
+            if query_lower in contact['phone']:
+                score += 5
+            
+            # Email match
+            if query_lower in contact['email'].lower():
+                score += 3
+            
+            # Tag match
+            for tag in contact['tags']:
+                if query_lower in tag.lower():
+                    score += 2
+            
+            # Notes match
+            if contact['notes'] and query_lower in contact['notes'].lower():
+                score += 1
+            
+            if score > 0:
+                results.append((contact, score))
+        
+        # Sort by score
+        results.sort(key=lambda x: x[1], reverse=True)
+        
+        return [contact for contact, score in results]

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MyFi — Organize Contacts</title>
+
+<!-- PWA Meta Tags -->
+<meta name="description" content="Organize your contacts with AI-powered relationship intelligence">
+<meta name="theme-color" content="#0051ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MyFi">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="/static/manifest.json">
+
+<!-- Icons -->
+<link rel="icon" type="image/png" sizes="32x32" href="/static/icons/icon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/icons/icon-16x16.png">
+<link rel="apple-touch-icon" href="/static/icons/icon-180x180.png">
+
+<link rel="stylesheet" href="/static/css/main.css">
+</head>
+
+<body>
+
+<!-- ADD BUTTON -->
+<div class="add-button" id="openAdd">+</div>
+
+<!-- SEARCH BAR -->
+<div class="search-container">
+    <input 
+        type="text" 
+        id="contactSearchInput" 
+        placeholder="Search contacts..."
+        class="search-input"
+    >
+</div>
+
+<div class="container">
+
+    <!-- MAIN CARD -->
+    <div class="main-card">
+        <div class="contact-name"></div>
+        <div class="contact-tag"></div>
+
+        <div class="contact-detail"></div>
+        <div class="contact-detail"></div>
+
+        <!-- Edit Button -->
+        <button id="editContactBtn" class="edit-btn">
+            ✏️ Edit Contact
+        </button>
+
+        <!-- Navigation -->
+        <div class="navigation-controls">
+            <button id="prevContactBtn" class="nav-btn">←</button>
+            <span id="contactPosition" class="position-counter">1 of 1</span>
+            <button id="nextContactBtn" class="nav-btn">→</button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+            <button class="btn btn-call">Call</button>
+            <button class="btn btn-msg">Message</button>
+        </div>
+    </div>
+
+    <!-- LOGIC -->
+    <div class="logic-card">
+        <div class="logic-title">Logic</div>
+        <div class="logic-text">
+            You haven't called <b>Sarah</b> in 2 days.<br>
+            She is active in the mornings.<br>
+            Consider giving her a quick check-in.
+        </div>
+
+        <a href="/logic" class="logic-link">
+            <button class="logic-btn">Chat with Logic</button>
+        </a>
+    </div>
+
+    <!-- CONTACTS STATS CARD -->
+    <div id="contactsStatsCard" class="contacts-stats-card">
+        <div id="contactsCountNumber" class="stats-number">0</div>
+        <div class="stats-label">Contacts</div>
+    </div>
+
+    <!-- SETTINGS CARD -->
+    
+    <a href="/settings" class="settings-card">
+        <div class="settings-icon">⚙️</div>
+        <div class="settings-label">Settings</div>
+    </a>
+
+    <!-- TAGS -->
+    <div class="tag-grid">
+        <div class="tag-tile">Family</div>
+        <div class="tag-tile">Work</div>
+        <div class="tag-tile">Friends</div>
+        <div class="tag-tile">Relationship</div>
+    </div>
+
+</div>
+
+<!-- FIRST MODAL (Choose Method) -->
+<div class="modal-overlay" id="modalOptions">
+    <div class="modal">
+        <div class="modal-title">Add Contact</div>
+
+        <div>
+            <input type="file" id="contactsFileInput" accept=".csv,.vcf" style="display:none" />
+            <button class="modal-btn" id="uploadBtn">Upload Contacts File</button>
+            <div id="status"></div>
+        </div>
+
+        <button class="modal-btn secondary" id="chooseCustom">Add Custom Contact</button>
+        <button class="modal-btn secondary" onclick="closeModals()">Cancel</button>
+    </div>
+</div>
+
+<!-- CUSTOM CONTACT FORM MODAL -->
+<div class="modal-overlay" id="modalCustom">
+    <div class="modal">
+        <div class="modal-title">New Contact</div>
+
+        <input class="input-field" placeholder="Full Name" id="cName">
+        <input class="input-field" placeholder="Phone Number" id="cPhone">
+        <input class="input-field" placeholder="Email (optional)" id="cEmail">
+
+        <select class="input-field" id="cTag">
+            <option value="">Tag</option>
+            <option value="Family">Family</option>
+            <option value="Friends">Friends</option>
+            <option value="Work">Work</option>
+            <option value="Relationship">Relationship</option>
+        </select>
+
+        <textarea class="input-field" placeholder="Notes (optional)" id="cNotes"></textarea>
+
+        <button class="modal-btn" onclick="saveContact()">Save Contact</button>
+        <button class="modal-btn secondary" onclick="closeModals()">Cancel</button>
+    </div>
+</div>
+
+<!-- EDIT CONTACT MODAL -->
+<div class="modal-overlay" id="modalEdit">
+    <div class="modal" style="max-width: 450px;">
+        <div class="modal-title">Edit Contact</div>
+
+        <input class="input-field" placeholder="Full Name" id="editName">
+        <input class="input-field" placeholder="Phone Number" id="editPhone">
+        <input class="input-field" placeholder="Email" id="editEmail">
+
+        <select class="input-field" id="editTag">
+            <option value="Family">Family</option>
+            <option value="Friends">Friends</option>
+            <option value="Work">Work</option>
+            <option value="Relationship">Relationship</option>
+            <option value="Riders">Riders</option>
+            <option value="Favorite">Favorite</option>
+            <option value="General">General</option>
+        </select>
+
+        <button class="notes-btn" onclick="openNotes()">📝 Notes</button>
+        
+        
+
+        <button class="modal-btn" onclick="saveContactEdits()">Save Changes</button>
+        <button class="modal-btn secondary" onclick="closeEditModal()">Cancel</button>
+        <button class="modal-btn delete-btn" onclick="deleteContact()">🗑️ Delete Contact</button>
+    </div>
+</div>
+
+
+<!-- PWA Registration -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/static/service-worker.js')
+                .then((registration) => {
+                    console.log('✓ ServiceWorker registered:', registration.scope);
+                })
+                .catch((error) => {
+                    console.error('✗ ServiceWorker registration failed:', error);
+                });
+        });
+    }
+
+    // Detect if app is installed
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('💡 MyFi can be installed as an app!');
+        
+        // Optional: Show install button
+        // showInstallButton();
+    });
+
+    window.addEventListener('appinstalled', () => {
+        console.log('✓ MyFi installed as PWA');
+        deferredPrompt = null;
+    });
+</script>
+
+<script>
+    const modalOptions = document.getElementById("modalOptions");
+    const modalCustom = document.getElementById("modalCustom");
+
+    document.getElementById("openAdd").onclick = () => {
+        modalOptions.style.display = "flex";
+    };
+
+    function closeModals() {
+        modalOptions.style.display = "none";
+        modalCustom.style.display = "none";
+    }
+
+    document.getElementById("chooseCustom").onclick = () => {
+        modalOptions.style.display = "none";
+        modalCustom.style.display = "flex";
+    };
+</script>
+
+<script src="/static/js/contactsDisplay.js"></script>
+<script src="/static/js/contactsFile.js"></script>
+<script src="/static/js/addCustomContactBtn.js"></script>
+<script src="/static/js/editContact.js"></script>
+<script src="/static/js/contactsLoader.js"></script>
+<script src="/static/js/logicIntegration.js"></script>
+<script src="/static/js/uploadContactsFile.js"></script>
+
+</body>
+</html>

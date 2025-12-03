@@ -1,0 +1,389 @@
+// =============================================
+// CONTACTS DISPLAY WITH SEARCH (LOCKED CONTACT VERSION)
+// =============================================
+
+let contactsArray = [];
+let filteredContacts = [];
+let currentIndex = 0;
+let totalContacts = 0;
+let isSearching = false;
+let currentEditingContactId = null;
+let isContactLocked = false; // NEW: Prevents auto-navigation
+
+// Tag colors
+const TAG_COLORS = {
+    "family": "#FFE7ED",
+    "friends": "#E9F7FF",
+    "work": "#F3F0FF",
+    "relationship": "#FFEFE3",
+    "riders": "#E8FFE8",
+    "favorite": "#FFFBDC",
+    "general": "#FFFFFF"
+};
+
+// Load contacts from database
+async function loadContactsFromDatabase(forceRefresh = false) {
+    try {
+        const response = await fetch("/api/contacts?page=1&per_page=10000");
+        const data = await response.json();
+
+        if (!data.contacts || data.contacts.length === 0) {
+            showEmptyCard();
+            return;
+        }
+
+        // Store previously viewed ID
+        const previousId = currentEditingContactId;
+        const wasLocked = isContactLocked;
+
+        // Update arrays
+        contactsArray = data.contacts;
+        totalContacts = data.total;
+        
+        // If searching, re-apply the filter
+        if (isSearching) {
+            const searchInput = document.getElementById('contactSearchInput');
+            const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            
+            if (query) {
+                filteredContacts = contactsArray.filter(contact => {
+                    const name = (contact.name || '').toLowerCase();
+                    const phone = (contact.phone || '').toLowerCase();
+                    const email = (contact.email || '').toLowerCase();
+                    return name.includes(query) || phone.includes(query) || email.includes(query);
+                });
+            } else {
+                filteredContacts = contactsArray;
+                isSearching = false;
+            }
+        } else {
+            filteredContacts = contactsArray;
+        }
+
+        // LOCKED BEHAVIOR: If contact is locked, ALWAYS restore it
+        if (wasLocked && previousId) {
+            const activeArray = isSearching ? filteredContacts : contactsArray;
+            const idx = activeArray.findIndex(c => c.id === previousId);
+            
+            if (idx !== -1) {
+                currentIndex = idx;
+                currentEditingContactId = previousId;
+                isContactLocked = true; // Maintain lock
+                displayContact(idx);
+                
+                if (typeof updateContactsCount === "function") {
+                    updateContactsCount(totalContacts);
+                }
+                
+                console.log(`✓ Loaded ${totalContacts} contacts (LOCKED on ID: ${previousId})`);
+                return;
+            }
+        }
+
+        // If previously viewing a contact (but not locked), try to restore
+        if (previousId && !wasLocked) {
+            const activeArray = isSearching ? filteredContacts : contactsArray;
+            const idx = activeArray.findIndex(c => c.id === previousId);
+            if (idx !== -1) {
+                currentIndex = idx;
+                displayContact(idx);
+                if (typeof updateContactsCount === "function") {
+                    updateContactsCount(totalContacts);
+                }
+                console.log(`✓ Loaded ${totalContacts} contacts`);
+                return;
+            }
+        }
+
+        // Default: show first contact (only if not locked)
+        if (!wasLocked) {
+            currentIndex = 0;
+            displayContact(0);
+        }
+
+        if (typeof updateContactsCount === "function") {
+            updateContactsCount(totalContacts);
+        }
+
+        console.log(`✓ Loaded ${totalContacts} contacts`);
+
+    } catch (err) {
+        console.error("Load error:", err);
+        showEmptyCard();
+    }
+}
+
+// Display contact on card with REAL-TIME UPDATE support
+function displayContact(index, forceUpdate = false) {
+    const activeArray = isSearching ? filteredContacts : contactsArray;
+
+    if (activeArray.length === 0) {
+        showEmptyCard();
+        return;
+    }
+
+    const contact = activeArray[index];
+
+    // If locked and not forcing update, fetch latest data for THIS contact
+    if (isContactLocked && !forceUpdate) {
+        refreshCurrentContact();
+        return;
+    }
+
+    // Set current editing ID
+    currentEditingContactId = contact.id;
+
+    // Render contact
+    renderContactCard(contact);
+
+    // Update counter
+    updatePositionCounter();
+}
+
+// NEW: Render contact card (extracted for reuse)
+function renderContactCard(contact) {
+    // Update name
+    document.querySelector(".contact-name").textContent = contact.name || "Unknown";
+
+    // Update tag
+    const tagText = contact.tag || "General";
+    document.querySelector(".contact-tag").textContent = tagText;
+
+    // Update phone & email
+    document.querySelectorAll(".contact-detail")[0].innerHTML = `📞 ${contact.phone || "No phone"}`;
+    document.querySelectorAll(".contact-detail")[1].innerHTML = `✉️ ${contact.email || "No email"}`;
+
+    // Change card color based on tag
+    const tagKey = tagText.toLowerCase().trim();
+    const bgColor = TAG_COLORS[tagKey] || TAG_COLORS["general"];
+    document.querySelector(".main-card").style.backgroundColor = bgColor;
+
+    // Update Logic card
+    updateLogicCard(contact.name);
+}
+
+// NEW: Refresh ONLY the current contact (real-time update)
+async function refreshCurrentContact() {
+    if (!currentEditingContactId) return;
+
+    try {
+        const response = await fetch(`/api/contacts/${currentEditingContactId}`);
+        const data = await response.json();
+
+        if (data.success && data.contact) {
+            // Update in arrays
+            const contactData = data.contact;
+            
+            // Update in main array
+            const mainIdx = contactsArray.findIndex(c => c.id === currentEditingContactId);
+            if (mainIdx !== -1) {
+                contactsArray[mainIdx] = contactData;
+            }
+
+            // Update in filtered array if searching
+            if (isSearching) {
+                const filteredIdx = filteredContacts.findIndex(c => c.id === currentEditingContactId);
+                if (filteredIdx !== -1) {
+                    filteredContacts[filteredIdx] = contactData;
+                }
+            }
+
+            // Re-render card with fresh data
+            renderContactCard(contactData);
+            
+            console.log('✓ Contact refreshed in real-time');
+        }
+    } catch (err) {
+        console.error('Error refreshing contact:', err);
+    }
+}
+
+// NEW: Lock the current contact
+function lockCurrentContact() {
+    if (currentEditingContactId) {
+        isContactLocked = true;
+        console.log(`🔒 Contact locked: ID ${currentEditingContactId}`);
+    }
+}
+
+// NEW: Unlock contact (allow navigation)
+function unlockContact() {
+    isContactLocked = false;
+    console.log('🔓 Contact unlocked');
+}
+
+// Show empty state
+function showEmptyCard() {
+    document.querySelector(".contact-name").textContent = "No Contacts";
+    document.querySelector(".contact-tag").textContent = isSearching ? "No matches found" : "Add contacts to start";
+    document.querySelectorAll(".contact-detail").forEach(d => d.textContent = "");
+    document.querySelector(".main-card").style.backgroundColor = "#FFFFFF";
+    currentEditingContactId = null;
+    isContactLocked = false;
+    updatePositionCounter();
+}
+
+// Update Logic card
+function updateLogicCard(name) {
+    const logicText = document.querySelector(".logic-text");
+    if (logicText) {
+        logicText.innerHTML = `You haven't called <b>${name}</b> in 2 days.<br>Consider giving them a quick check-in.`;
+    }
+}
+
+// Navigation (respects lock)
+function nextContact() {
+    if (isContactLocked) {
+        console.log('⚠️ Contact is locked. Unlock to navigate.');
+        return;
+    }
+
+    const activeArray = isSearching ? filteredContacts : contactsArray;
+    if (activeArray.length === 0) return;
+
+    currentIndex = (currentIndex + 1) % activeArray.length;
+    displayContact(currentIndex);
+}
+
+function previousContact() {
+    if (isContactLocked) {
+        console.log('⚠️ Contact is locked. Unlock to navigate.');
+        return;
+    }
+
+    const activeArray = isSearching ? filteredContacts : contactsArray;
+    if (activeArray.length === 0) return;
+
+    currentIndex = (currentIndex - 1 + activeArray.length) % activeArray.length;
+    displayContact(currentIndex);
+}
+
+// Update position counter
+function updatePositionCounter() {
+    const activeArray = isSearching ? filteredContacts : contactsArray;
+    const counter = document.getElementById("contactPosition");
+    
+    if (counter) {
+        if (activeArray.length === 0) {
+            counter.textContent = "0 of 0";
+        } else {
+            const lockIndicator = isContactLocked ? " 🔒" : "";
+            counter.textContent = `${currentIndex + 1} of ${activeArray.length}${lockIndicator}`;
+        }
+    }
+}
+
+// Update contacts count card
+function updateContactsCount(count) {
+    const countElement = document.getElementById('contactsCountNumber');
+    if (countElement) {
+        countElement.textContent = count;
+    }
+}
+
+// SEARCH FUNCTIONALITY (respects lock)
+function setupSearch() {
+    const searchInput = document.getElementById('contactSearchInput');
+    
+    if (!searchInput) {
+        console.warn('Search input not found');
+        return;
+    }
+
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim().toLowerCase();
+
+        // If contact is locked, prevent search from changing view
+        if (isContactLocked) {
+            console.log('⚠️ Contact is locked. Clear lock to search freely.');
+            // Still allow filtering, but don't change currentIndex
+            if (query === '') {
+                isSearching = false;
+                filteredContacts = contactsArray;
+            } else {
+                isSearching = true;
+                filteredContacts = contactsArray.filter(contact => {
+                    const name = (contact.name || '').toLowerCase();
+                    const phone = (contact.phone || '').toLowerCase();
+                    const email = (contact.email || '').toLowerCase();
+                    return name.includes(query) || phone.includes(query) || email.includes(query);
+                });
+            }
+            updatePositionCounter();
+            return;
+        }
+
+        if (query === '') {
+            // Reset to full list, try to stay on same contact
+            isSearching = false;
+            filteredContacts = contactsArray;
+            
+            // Try to find current contact in full list
+            if (currentEditingContactId) {
+                const idx = contactsArray.findIndex(c => c.id === currentEditingContactId);
+                if (idx !== -1) {
+                    currentIndex = idx;
+                } else {
+                    currentIndex = 0;
+                }
+            } else {
+                currentIndex = 0;
+            }
+            
+            displayContact(currentIndex);
+            return;
+        }
+
+        // Filter contacts
+        isSearching = true;
+        filteredContacts = contactsArray.filter(contact => {
+            const name = (contact.name || '').toLowerCase();
+            const phone = (contact.phone || '').toLowerCase();
+            const email = (contact.email || '').toLowerCase();
+            
+            return name.includes(query) || phone.includes(query) || email.includes(query);
+        });
+
+        // Try to stay on current contact if it's in results
+        currentIndex = 0;
+        if (currentEditingContactId && filteredContacts.length > 0) {
+            const idx = filteredContacts.findIndex(c => c.id === currentEditingContactId);
+            if (idx !== -1) {
+                currentIndex = idx;
+            }
+        }
+        
+        if (filteredContacts.length > 0) {
+            displayContact(currentIndex);
+        } else {
+            showEmptyCard();
+        }
+    });
+
+    console.log('✓ Search connected');
+}
+
+// Setup navigation buttons (ONCE)
+let navigationSetup = false;
+
+function setupNavigation() {
+    if (navigationSetup) return;
+
+    const prevBtn = document.getElementById('prevContactBtn');
+    const nextBtn = document.getElementById('nextContactBtn');
+
+    if (prevBtn && nextBtn) {
+        prevBtn.onclick = previousContact;
+        nextBtn.onclick = nextContact;
+        navigationSetup = true;
+        console.log('✓ Navigation connected');
+    }
+}
+
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", () => {
+    console.log('Initializing contacts system...');
+    setupNavigation();
+    setupSearch();
+    loadContactsFromDatabase();
+});

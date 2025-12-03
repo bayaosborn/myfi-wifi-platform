@@ -1,0 +1,226 @@
+// =============================================
+// CONTACTS DISPLAY MANAGER (FIXED VERSION)
+// =============================================
+
+let contactsArray = [];
+let currentIndex = 0;
+let totalContacts = 0;
+
+// Tag colors
+const TAG_COLORS = {
+    "family":       "#FFE7ED",   // soft pink
+    "friends":      "#E9F7FF",   // light blue
+    "work":         "#F3F0FF",   // lavender
+    "relationship": "#FFEFE3",   // peach
+    "riders":       "#E8FFE8",   // light green
+    "favorite":     "#FFFBDC",   // soft yellow
+    "general":      "#FFFFFF"    // white
+};
+
+
+
+
+// Add this near the top, after the TAG_COLORS definition
+
+// Update the contacts count card
+function updateContactsCount(count) {
+    const countElement = document.getElementById('contactsCountNumber');
+    if (countElement) {
+        countElement.textContent = count;
+        console.log(`✓ Contacts count updated to: ${count}`);
+    } else {
+        console.error('ERROR: contactsCountNumber element not found!');
+    }
+}
+
+
+
+
+
+
+// Load contacts from database
+async function loadContactsFromDatabase() {
+    try {
+        const response = await fetch("/api/contacts?page=1&per_page=1000");
+        const data = await response.json();
+
+        console.log('API Response:', data); // DEBUG: See what API returns
+
+        // Check if we got contacts
+        if (!data.contacts || data.contacts.length === 0) {
+            console.log('No contacts returned from API');
+            showEmptyCard();
+            return;
+        }
+
+        // Store contacts
+        contactsArray = data.contacts;
+        totalContacts = data.total;
+        currentIndex = 0;
+
+        console.log(`Loaded ${contactsArray.length} contacts:`, contactsArray); // DEBUG
+
+        // Display first contact
+        displayContact(currentIndex);
+
+        // Update count card
+        if (typeof updateContactsCount === "function") {
+            updateContactsCount(totalContacts);
+        }
+
+    } catch (err) {
+        console.error("Failed to load contacts:", err);
+        showEmptyCard();
+    }
+}
+
+// Display a contact on the card
+function displayContact(index) {
+    console.log(`displayContact called with index: ${index}`); // DEBUG
+
+    // Safety check
+    if (!contactsArray || contactsArray.length === 0) {
+        console.log('No contacts in array');
+        showEmptyCard();
+        return;
+    }
+
+    // Get the contact
+    const contact = contactsArray[index];
+    console.log('Displaying contact:', contact); // DEBUG
+
+    // Update name (MUST find element)
+    const nameElement = document.querySelector(".contact-name");
+    if (nameElement) {
+        nameElement.textContent = contact.name || "Unknown";
+    } else {
+        console.error('ERROR: .contact-name element not found!');
+    }
+
+    // Update tag
+    const tagText = contact.tag || "General";
+    const tagElement = document.querySelector(".contact-tag");
+    if (tagElement) {
+        tagElement.textContent = tagText;
+    } else {
+        console.error('ERROR: .contact-tag element not found!');
+    }
+
+    // Update phone
+    const phoneElement = document.querySelectorAll(".contact-detail")[0];
+    if (phoneElement) {
+        phoneElement.innerHTML = `📞 ${contact.phone || "No phone"}`;
+    } else {
+        console.error('ERROR: First .contact-detail element not found!');
+    }
+
+    // Update email
+    const emailElement = document.querySelectorAll(".contact-detail")[1];
+    if (emailElement) {
+        emailElement.innerHTML = `✉️ ${contact.email || "No email"}`;
+    } else {
+        console.error('ERROR: Second .contact-detail element not found!');
+    }
+
+    // Change card color based on tag
+    const tagKey = tagText.toLowerCase().trim();
+    const bgColor = TAG_COLORS[tagKey] || TAG_COLORS["general"];
+
+    const mainCard = document.querySelector(".main-card");
+    if (mainCard) {
+        mainCard.style.backgroundColor = bgColor;
+        console.log(`Card color set to: ${bgColor} for tag: ${tagKey}`);
+    } else {
+        console.error('ERROR: .main-card element not found!');
+    }
+
+    // Update Logic card
+    updateLogicCard(contact.name);
+
+    // Update counter
+    updatePositionCounter();
+
+    console.log(`Successfully displayed contact ${index + 1} of ${contactsArray.length}`);
+}
+
+// Show empty state
+function showEmptyCard() {
+    console.log('showEmptyCard called');
+
+    const nameElement = document.querySelector(".contact-name");
+    const tagElement = document.querySelector(".contact-tag");
+
+    if (nameElement) nameElement.textContent = "No Contacts";
+    if (tagElement) tagElement.textContent = "Add contacts to get started";
+
+    // Clear details
+    const details = document.querySelectorAll(".contact-detail");
+    details.forEach(d => d.textContent = "");
+
+    // Reset card color
+    const mainCard = document.querySelector(".main-card");
+    if (mainCard) mainCard.style.backgroundColor = "#FFFFFF";
+
+    updatePositionCounter();
+}
+
+// Update Logic card text
+function updateLogicCard(name) {
+    const logicText = document.querySelector(".logic-text");
+    if (logicText) {
+        logicText.innerHTML = `
+            You haven't called <b>${name}</b> in 2 days.<br>
+            Consider giving them a quick check-in.
+        `;
+    }
+}
+
+// Navigation functions
+function nextContact() {
+    if (contactsArray.length === 0) return;
+    currentIndex = (currentIndex + 1) % contactsArray.length;
+    displayContact(currentIndex);
+}
+
+function previousContact() {
+    if (contactsArray.length === 0) return;
+    currentIndex = (currentIndex - 1 + contactsArray.length) % contactsArray.length;
+    displayContact(currentIndex);
+}
+
+// Update position counter
+function updatePositionCounter() {
+    const counter = document.getElementById("contactPosition");
+    if (counter) {
+        if (contactsArray.length === 0) {
+            counter.textContent = "0 of 0";
+        } else {
+            counter.textContent = `${currentIndex + 1} of ${contactsArray.length}`;
+        }
+    }
+}
+
+// Initialize when page loads
+document.addEventListener("DOMContentLoaded", () => {
+    console.log('Page loaded, setting up navigation...');
+
+    const prevBtn = document.getElementById("prevContactBtn");
+    const nextBtn = document.getElementById("nextContactBtn");
+
+    if (prevBtn) {
+        prevBtn.onclick = previousContact;
+        console.log('Previous button connected');
+    } else {
+        console.error('ERROR: prevContactBtn not found!');
+    }
+
+    if (nextBtn) {
+        nextBtn.onclick = nextContact;
+        console.log('Next button connected');
+    } else {
+        console.error('ERROR: nextContactBtn not found!');
+    }
+
+    // Load contacts
+    loadContactsFromDatabase();
+});

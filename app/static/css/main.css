@@ -1,0 +1,391 @@
+/* =============================================
+   MYFI MAIN STYLES
+   ============================================= */
+
+body {
+    font-family: "Poppins", sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fafafa;
+    color: #111;
+}
+
+/* =============================================
+   ADD BUTTON
+   ============================================= */
+
+.add-button {
+    width: 60px;
+    height: 60px;
+    background: #0051ff;
+    border-radius: 18px;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 36px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0, 81, 255, 0.3);
+    z-index: 100;
+}
+
+
+/* HEADER STYLING */
+.header {
+    display: flex;
+    justify-content: space-between; /* logo left, settings right */
+    align-items: center;            /* vertical alignment */
+    padding: 1rem 1rem;
+    background-color: #f8f8f8;
+    
+}
+
+.header a {
+    text-decoration: none;
+}
+
+/* LOGO */
+.header .logo img {
+    height: 2rem;   /* same as icon */
+    width: auto;      /* keep aspect ratio */
+    display: block;
+}
+
+/* SETTINGS ICON */
+.settings-icon {
+    font-size: 2rem; /* same height as logo */
+    cursor: pointer;
+}
+
+/* RESPONSIVE: adjust padding on small screens */
+@media (max-width: 480px) {
+    .header {
+        padding: 0.5rem;
+    }
+
+    .header .logo img,
+    .settings-icon {
+        height: 1.8rem;
+        font-size: 1.8rem;
+    }
+}
+
+/* =============================================
+   SEARCH BAR
+   ============================================= */
+
+.search-container {
+    width: 100%;
+    margin: 20px 0 15px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.search-input {
+    width: 85%;
+    padding: 16px 20px;
+    font-size: 16px;
+    border-radius: 18px;
+    border: 1.5px solid #dcdcdc;
+    outline: none;
+    background: #fafafa;
+    transition: 0.25s ease;
+    color: #111;
+}
+
+.search-input::placeholder {
+    color: #aaa;
+}
+
+.search-input:focus {
+    border-color: #0051ff;
+    background: white;
+    box-shadow: 0 4px 14px rgba(0, 81, 255, 0.15);
+}
+
+/* =============================================
+   CONTAINER
+   ============================================= */
+
+.container {
+    padding: 20px;
+    padding-top: 20px;
+    max-width: 450px;
+    margin: auto;
+}
+
+/* =============================================
+   MAIN CONTACT CARD
+   ============================================= */
+
+.main-card {
+    border-radius: 26px;
+    padding: 25px;
+    border: 2px solid #111;
+    margin-bottom: 25px;
+}
+
+.contact-name {
+    font-size: 27px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.contact-tag {
+    display: inline-block;
+    padding: 8px 14px;
+    font-size: 14px;
+    background: #e6e6e6;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.contact-detail {
+    font-size: 15px;
+    margin-bottom: 6px;
+}
+
+/* Edit Button */
+.edit-btn {
+    background: white;
+    color: #111;
+    border: 2px solid #111;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 15px;
+    width: 100%;
+    transition: 0.2s;
+}
+
+.edit-btn:hover {
+    background: #f5f5f5;
+}
+
+/* Navigation Controls */
+.navigation-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0;
+    padding: 10px 0;
+    border-top: 1px solid #e6e6e6;
+    border-bottom: 1px solid #e6e6e6;
+}
+
+.nav-btn {
+    background: transparent;
+    border: 2px solid #111;
+    border-radius: 12px;
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.position-counter {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+}
+
+/* Action Buttons */
+.actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    flex: 1;
+    padding: 14px 0;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.btn-call {
+    background: #10b981;
+    color: white;
+}
+
+.btn-msg {
+    background: #0051ff;
+    color: white;
+}
+
+/* =============================================
+   LOGIC CARD
+   ============================================= */
+
+.logic-card {
+    background: white;
+    padding: 20px;
+    border-radius: 22px;
+    border-left: 6px solid #0051ff;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.logic-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.logic-text {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.logic-link {
+    text-decoration: none;
+}
+
+.logic-btn {
+    background: #0051ff;
+    color: white;
+    border: none;
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 6px 14px rgba(0, 81, 255, 0.25);
+}
+
+/* =============================================
+   CONTACTS STATS CARD
+   ============================================= */
+
+.contacts-stats-card {
+    background: #ffffff;
+    color: #111;
+    padding: 26px 20px;
+    border: 2px solid #000;
+    border-radius: 24px;
+    margin: 25px auto;
+    font-family: 'Poppins', sans-serif;
+    width: 85%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.stats-number {
+    font-size: 42px;
+    font-weight: 800;
+    color: #0051ff;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.stats-label {
+    font-size: 18px;
+    font-weight: 500;
+    color: #111;
+}
+
+/* =============================================
+   TAG SHORTCUTS
+   ============================================= */
+
+.tag-grid {
+    margin-top: 15px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.tag-tile {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 20px;
+    border: 2px solid #dedede;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.tag-tile:hover {
+    background: #f2f2f2;
+}
+
+/* =============================================
+   MODALS
+   ============================================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+}
+
+.modal {
+    background: #fff;
+    padding: 25px;
+    border-radius: 18px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+
+.modal-btn {
+    width: 100%;
+    padding: 14px 0;
+    background: #0051ff;
+    color: white;
+    border-radius: 12px;
+    font-size: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    border: none;
+}
+
+.modal-btn.secondary {
+    background: #e5e7eb;
+    color: #111;
+}
+
+.modal-btn.delete-btn {
+    background: #ff4444;
+    margin-top: 20px;
+}
+
+/* Input Fields */
+.input-field {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    box-sizing: border-box;
+}

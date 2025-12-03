@@ -1,0 +1,126 @@
+"""
+Simple Logic Engine
+Reads CSV and uses Groq to answer questions
+"""
+
+from groq import Groq
+import os
+import csv
+import io
+from .prompts import SYSTEM_PROMPT
+from .baya import BAYA_INSTRUCTIONS
+
+class LogicEngine:
+    def __init__(self):
+        # Get Groq API key
+        api_key = os.getenv('GROQ_API_KEY')
+        if not api_key:
+            raise ValueError("GROQ_API_KEY not found in environment")
+        
+        self.groq = Groq(api_key=api_key)
+        self.model = 'llama-3.3-70b-versatile'
+        self.contacts = []
+        
+        print("✓ Logic engine initialized")
+    
+    def load_contacts(self, csv_content: str) -> int:
+        """Load contacts from CSV content"""
+        self.contacts = []
+        
+        # Parse CSV
+        csv_file = io.StringIO(csv_content)
+        reader = csv.DictReader(csv_file)
+        
+        for row in reader:
+            # Extract contact info
+            contact = {
+                'name': row.get('username', row.get('name', 'Unknown')),
+                'phone': row.get('phone', ''),
+                'email': row.get('email', ''),
+                'tags': row.get('tags', '').split(',') if row.get('tags') else [],
+                'notes': row.get('notes', '')
+            }
+            self.contacts.append(contact)
+        
+        print(f"✓ Loaded {len(self.contacts)} contacts")
+        return len(self.contacts)
+    
+    def get_contacts_summary(self) -> str:
+        """Create a summary of contacts for the AI"""
+        if not self.contacts:
+            return "No contacts available."
+        
+        summary = f"You have access to {len(self.contacts)} contacts:\n\n"
+        
+        for i, contact in enumerate(self.contacts, 1):
+            tags_str = ', '.join(contact['tags']) if contact['tags'] else 'no tags'
+            summary += f"{i}. {contact['name']}"
+            if contact['phone']:
+                summary += f" ({contact['phone']})"
+            summary += f" - Tags: {tags_str}"
+            if contact['notes']:
+                summary += f" - Notes: {contact['notes']}"
+            summary += "\n"
+        
+        return summary
+    
+    def chat(self, message: str) -> str:
+        """
+        Process user message and return response
+        """
+        # Build context with contacts
+        contacts_context = self.get_contacts_summary()
+        
+        # Create messages for Groq
+        messages = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT
+            },
+            {
+                "role": "system",
+                "content": f"Here are the user's contacts:\n{contacts_context}"
+            },
+            {
+                "role": "user",
+                "content": message
+            },
+            {
+                "role": "baya",
+                "content": BAYA_INSTRUCTIONS
+            }
+        ]
+        
+        # Call Groq API
+        try:
+            response = self.groq.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=500
+            )
+            
+            return response.choices[0].message.content
+        
+        except Exception as e:
+            print(f"Groq API error: {e}")
+            return "I'm having trouble processing that right now. Please try again."
+    
+    def search_contacts(self, query: str) -> list:
+        """Simple contact search"""
+        query_lower = query.lower()
+        results = []
+        
+        for contact in self.contacts:
+            # Search by name
+            if query_lower in contact['name'].lower():
+                results.append(contact)
+                continue
+            
+            # Search by tags
+            for tag in contact['tags']:
+                if query_lower in tag.lower():
+                    results.append(contact)
+                    break
+        
+        return results
