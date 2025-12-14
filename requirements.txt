@@ -6,3 +6,21 @@ flask-cors==4.0.0
 groq==0.4.2
 python-dotenv==1.0.0
 gunicorn==21.2.0
+
+
+# NEW: Add these for Supabase authentication
+#supabase==2.3.4
+#gotrue==2.3.0
+
+# Optional but recommended
+requests==2.31.0
+
+
+# CORRECTED: Supabase with compatible versions
+#supabase==2.7.4
+#gotrue==2.8.1
+#postgrest==0.16.11
+
+# Required for Supabase
+#httpx==0.27.0
+#python-dateutil==2.8.2

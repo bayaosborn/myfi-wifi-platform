@@ -261,10 +261,67 @@ function setupNavigation() {
     }
 }
 
+
+
+function setupCallButton() {
+    const callBtn = document.querySelector('.btn-call');
+    if (!callBtn) return;
+
+    callBtn.addEventListener('click', () => {
+        const activeArray = isSearching ? filteredContacts : contactsArray;
+        if (!activeArray.length) return;
+
+        const contact = activeArray[currentIndex];
+        if (!contact || !contact.phone) {
+            alert('No phone number available');
+            return;
+        }
+
+        // Clean phone number (basic)
+        const phoneNumber = contact.phone.replace(/\s+/g, '');
+
+        // Trigger phone app
+        window.location.href = `tel:${phoneNumber}`;
+    });
+}
+
+
+
+
+function setupSmsButton() {
+    const smsBtn = document.querySelector('.btn-msg');
+    if (!smsBtn) return;
+
+    smsBtn.addEventListener('click', () => {
+        const activeArray = isSearching ? filteredContacts : contactsArray;
+        if (!activeArray.length) return;
+
+        const contact = activeArray[currentIndex];
+        if (!contact || !contact.phone) {
+            alert('No phone number available');
+            return;
+        }
+
+        // Clean phone number
+        const phoneNumber = contact.phone.replace(/\s+/g, '');
+
+        // Prefilled SMS body (light branding)
+        const message = encodeURIComponent('MyFi:');
+
+        // Trigger SMS app
+        window.location.href = `sms:${phoneNumber}?body=${message}`;
+    });
+}
+
+
+
+
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", () => {
     console.log('Initializing contacts system...');
     setupNavigation();
     setupSearch();
+    setupCallButton();
+    setupSmsButton();
     loadContactsFromDatabase();
 });

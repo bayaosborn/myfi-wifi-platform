@@ -6,10 +6,11 @@ Simple Flask app focused on Logic AI.
 SocketIO will be added later for WebRTC calls.
 """
 
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, session, redirect
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
+
 
 
 from flask import send_from_directory
@@ -19,16 +20,6 @@ from flask import send_from_directory
 #from flask import Flask, request, jsonify, render_template
 import csv
 import io
-from app.backend.database import (
-    get_all_contacts, 
-    get_contact_by_id, 
-    create_contact, 
-    update_contact, 
-    delete_contact,
-    search_contacts,
-    get_contacts_by_tag,
-    bulk_insert_contacts
-)
 
 # Load environment variables
 load_dotenv()
@@ -53,16 +44,31 @@ from app.routes import register_blueprints
 register_blueprints(app)
 
 # Routes
+# Home route
 @app.route('/')
 def index():
-    """Main Logic chat interface"""
-    return render_template('index.html')  # Your chat UI
+    """Main Logic chat interface - protected route"""
+    # Check if user is authenticated
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    # User is authenticated, show the app
+    return render_template('index.html')  # Your existing chat UI
+    
+
+
+
+
+
+# Your chat UI
 
 
 @app.route('/logic')
 def logic():
     """Logic Chat page"""
     return render_template('logic.html')
+
+
 
 
 

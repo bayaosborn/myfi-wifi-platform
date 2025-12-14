@@ -3,51 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delete All Contacts</title>
+    <title>Settings</title>
 
-    <style>
+    <link rel="stylesheet" href="/static/css/settings.css">
 
-        /* --------------------------------------------------
-        MYFI DELETE ALL CONTACTS BUTTON
-        -------------------------------------------------- */
-        .delete-all-btn {
-            display: block;
-            margin: 24px auto 0 auto;      /* centered, spacing */
-            padding: 14px 20px;
+    
+    
+    
 
-            background: #ff4d4f;           /* MyFi soft red */
-            color: white;
-            border: none;
-            border-radius: 14px;
-
-            font-size: 16px;
-            font-weight: 600;
-            text-align: center;
-
-            cursor: pointer;
-            width: 90%;                     /* looks correct on all phones */
-            max-width: 320px;               /* prevents stretching */
-            transition: 0.25s ease;
-            box-shadow: 0 4px 10px rgba(255, 77, 79, 0.25);
-        }
-
-        .delete-all-btn:hover {
-            background: #ff3335;
-            box-shadow: 0 6px 14px rgba(255, 77, 79, 0.35);
-            transform: translateY(-2px);
-        }
-
-        .delete-all-btn:active {
-            transform: scale(0.98);
-        }
-
-    </style>
+    
 </head>
 <body>
+
+    <h1>Settings</h1>
+
+
+
+    <!-- PROFILE CARD -->
+
+
+    <!-- Profile Card Component - Drop this into settings.html -->
+
+<style>
+    .profile-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .profile-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        margin-right: 16px;
+        flex-shrink: 0;
+    }
+
+    .profile-info {
+        flex: 1;
+    }
+
+    .profile-info h2 {
+        margin: 0 0 4px 0;
+        font-size: 20px;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .profile-info p {
+        margin: 0;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .profile-details {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .profile-detail-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+    }
+
+    .profile-detail-label {
+        font-weight: 500;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .profile-detail-value {
+        color: #333;
+        font-size: 14px;
+        text-align: right;
+    }
+
+    .profile-loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+
+    .profile-error {
+        background: #fee;
+        color: #c33;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 14px;
+    }
+</style>
+
+<!-- Profile Card -->
+<div class="profile-card">
+    <!-- Loading State -->
+    <div id="profileLoading" class="profile-loading">
+        <div>Loading profile...</div>
+    </div>
+
+    <!-- Error State -->
+    <div id="profileError" class="profile-error" style="display: none;"></div>
+
+    <!-- Profile Content (hidden initially) -->
+    <div id="profileContent" style="display: none;">
+        <div class="profile-header">
+            <div class="profile-avatar" id="profileAvatar">U</div>
+            <div class="profile-info">
+                <h2 id="profileName">User Name</h2>
+                <p id="profileEmail">email@example.com</p>
+            </div>
+        </div>
+
+        <div class="profile-details">
+            <div class="profile-detail-item">
+                <span class="profile-detail-label">Username</span>
+                <span class="profile-detail-value" id="profileUsername">-</span>
+            </div>
+            <div class="profile-detail-item">
+                <span class="profile-detail-label">User ID</span>
+                <span class="profile-detail-value" id="profileUserId" style="font-size: 11px; color: #999;">-</span>
+            </div>
+            <div class="profile-detail-item">
+                <span class="profile-detail-label">Member Since</span>
+                <span class="profile-detail-value" id="profileMemberSince">-</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load user profile
+async function loadUserProfile() {
+    try {
+        const response = await fetch('/api/auth/user');
+        
+        if (response.ok) {
+            const userData = await response.json();
+            displayUserProfile(userData);
+        } else {
+            // Not authenticated, redirect to login
+            window.location.href = '/login';
+        }
+    } catch (error) {
+        console.error('Profile load error:', error);
+        showProfileError('Failed to load profile');
+    }
+}
+
+function displayUserProfile(user) {
+    // Hide loading, show content
+    document.getElementById('profileLoading').style.display = 'none';
+    document.getElementById('profileContent').style.display = 'block';
+
+    // Get initials for avatar
+    const name = user.full_name || user.username || user.email || 'User';
+    const initials = name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    
+    document.getElementById('profileAvatar').textContent = initials;
+
+    // Display user info
+    document.getElementById('profileName').textContent = user.full_name || user.username || 'User';
+    document.getElementById('profileEmail').textContent = user.email;
+    document.getElementById('profileUsername').textContent = user.username || '-';
+    document.getElementById('profileUserId').textContent = user.id;
+
+    // Format member since date
+    if (user.created_at) {
+        const date = new Date(user.created_at);
+        const formatted = date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        document.getElementById('profileMemberSince').textContent = formatted;
+    } else {
+        document.getElementById('profileMemberSince').textContent = '-';
+    }
+}
+
+function showProfileError(message) {
+    document.getElementById('profileLoading').style.display = 'none';
+    document.getElementById('profileError').textContent = message;
+    document.getElementById('profileError').style.display = 'block';
+}
+
+// Load profile on page load
+loadUserProfile();
+</script>
+
+
+
+
+    <!-- END OF PROFILE CARD -->
+
+
+
+    <button id="merge-btn"  class="merge-btn" onclick="openMergeModal()">
+    Checking for duplicates...
+    </button>
+
+
+    
+
+    <!-- LOGOUT BUTTON -->
+
+
+    <!-- Logout Button Component -->
+<div class="logout-section">
+    <button id="logoutBtn" class="logout-button">
+        <span class="logout-icon">🚪</span>
+        <span id="logoutBtnText">Logout</span>
+    </button>
+</div>
+
+<script>
+// Logout functionality
+document.getElementById('logoutBtn').addEventListener('click', async function() {
+    const btn = this;
+    const btnText = document.getElementById('logoutBtnText');
+
+    // Disable button
+    btn.disabled = true;
+    btnText.textContent = 'Logging out...';
+
+    try {
+        const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            btnText.textContent = 'Logged out!';
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 500);
+        } else {
+            throw new Error('Logout failed');
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+        alert('Logout failed. Please try again.');
+
+        // Re-enable button
+        btn.disabled = false;
+        btnText.textContent = 'Logout';
+    }
+});
+</script>
+
+    <!-- END -->
+    
+
+
+    
+
+    
 
     <button class="delete-all-btn" onclick="deleteAllContacts()">
         Delete All Contacts
     </button>
+
+
+
+
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <div class="modal-icon">🔗</div>
+                    Merge Duplicate Contacts
+                </div>
+                <div class="modal-subtitle">Found contacts with matching phone numbers</div>
+            </div>
+
+            <div class="modal-body">
+                <div class="duplicate-count">
+                    <div class="count-number" id="modalDuplicateCount">0</div>
+                    <div class="count-label">duplicate contacts found</div>
+                </div>
+
+                <div class="merge-info">
+                    <div class="merge-info-title">ℹ️ How it works</div>
+                    <div class="merge-info-text">
+                        We'll keep the most complete contact (with the most filled fields), merge all notes together, and remove the duplicates. This action cannot be undone.
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('confirmModal')">
+                    Cancel
+                </button>
+                <button class="btn btn-primary" id="modalMergeBtn" onclick="mergeDuplicates()">
+                    <span id="modalMergeBtnText">Merge Now</span>
+                    <div class="spinner hidden" id="modalMergeSpinner"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <div class="modal-body" style="padding: 40px 24px;">
+                <div class="success-icon">✓</div>
+                <div class="success-title">Merge Complete!</div>
+                <div class="success-message" id="successMessage">
+                    Successfully merged duplicate contacts
+                </div>
+
+                <div class="success-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="mergedGroups">0</div>
+                        <div class="stat-label">Groups Merged</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="deletedContacts">0</div>
+                        <div class="stat-label">Duplicates Removed</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeSuccessAndRefresh()" style="width: 100%;">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    
+
+<script src="/static/js/contacts/mergeContacts.js"></script>
+
 
     <script>
         async function deleteAllContacts() {
@@ -60,8 +378,8 @@
             if (!second) return;
 
             try {
-                const response = await fetch('/delete_all_contacts', {
-                    method: 'POST'
+                const response = await fetch('/api/contacts/delete-all', {
+                    method: 'DELETE'
                 });
 
                 const data = await response.json();

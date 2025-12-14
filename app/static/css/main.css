@@ -3,12 +3,61 @@
    ============================================= */
 
 body {
-    font-family: "Poppins", sans-serif;
+    /*font-family: "Poppins", sans-serif;*/
     margin: 0;
     padding: 0;
     background: #fafafa;
     color: #111;
 }
+
+
+
+
+
+
+
+/* --------------------------------------------------
+   MYFI GLOBAL FONT SYSTEM
+   Clean, rounded, modern — perfect for UI
+-------------------------------------------------- */
+
+/* Inter is excellent for UI — but we add SF Pro + Poppins fallback
+   so iOS + Android both look premium */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+
+:root {
+    --myfi-font-primary: "Inter", "Poppins", -apple-system, BlinkMacSystemFont,
+                         "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+
+    /* Optional — titles become softer & rounded */
+    --myfi-font-title: "Poppins", "Inter", -apple-system, BlinkMacSystemFont,
+                       "Segoe UI", Roboto, sans-serif;
+}
+
+/* Apply globally */
+body, button, input, textarea, select {
+    font-family: var(--myfi-font-primary);
+    letter-spacing: -0.2px;          /* cleaner UI look */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Beautiful large modal titles */
+.modal-title {
+    font-family: var(--myfi-font-title);
+    font-weight: 600;
+    letter-spacing: -0.3px;
+}
+
+/* Buttons become cleaner */
+.btn {
+    font-family: var(--myfi-font-primary);
+    font-weight: 500;
+}
+
+
+
+
 
 /* =============================================
    ADD BUTTON

@@ -27,7 +27,7 @@ async function saveContact() {
     console.log('Sending contact data:', contactData);
     
     try {
-        const response = await fetch('/api/add-contact', {
+        const response = await fetch('/api/contacts', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
