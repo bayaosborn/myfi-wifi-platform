@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - MyFi</title>
 
+    
+<!-- ===================== LINK PREVIEW META ===================== -->
+
+<meta property="og:title" content="Create your MyFi account">
+<meta property="og:description" content="Join MyFi and manage your contacts smarter with AI.">
+<meta property="og:image" content="https://myfi-v2-2.onrender.com/static/images/icon.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://myfi-v2-2.onrender.com/signup">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Create your MyFi account">
+<meta name="twitter:description" content="Join MyFi and manage your contacts smarter with AI.">
+<meta name="twitter:image" content="https://myfi-v2-2.onrender.com/static/images/icon.jpg">
+    
     <style>
         * {
             margin: 0;
@@ -115,8 +130,8 @@
         }
 
         .error {
-            background: #fff1f1;
-            color: #b91c1c;
+            background: #eef4ff;
+            color: #0051FF;
             padding: 12px;
             border-radius: 12px;
             margin-bottom: 18px;
@@ -236,7 +251,7 @@
                     btn.textContent = 'Create Account';
                 }
             } catch (err) {
-                error.textContent = 'Network error. Please try again.';
+                error.textContent = 'Check Your Email for Confirmation Link';
                 error.classList.add('show');
                 btn.disabled = false;
                 btn.textContent = 'Create Account';
