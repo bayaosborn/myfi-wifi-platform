@@ -20,11 +20,11 @@ def register_blueprints(app):
 
     # Import blueprints
     from app.routes.auth import auth_bp
-    from app.routes.contacts import contacts_bp
-    from app.routes.contacts_import import cont_import_bp
-    from app.routes.contacts_merge import cont_merge_bp
+    from app.routes.contacts.contacts import contacts_bp
+    from app.routes.contacts.cImport import cont_import_bp
+    from app.routes.contacts.merge import cont_merge_bp
     
-    # from app.routes.logic_routes import logic_bp
+    from app.routes.logic.logic import logic_bp
     # from app.routes.mergeContacts import mergeContacts_bp
     # from app.routes.addCustomContact import addCustomContact_bp
     # from app.routes.notes import notes_bp
@@ -36,7 +36,7 @@ def register_blueprints(app):
     app.register_blueprint(cont_import_bp)
     app.register_blueprint(cont_merge_bp)
 
-    # app.register_blueprint(logic_bp)
+    app.register_blueprint(logic_bp)
     # app.register_blueprint(addCustomContact_bp)
     # app.register_blueprint(mergeContacts_bp)
     # app.register_blueprint(notes_bp)

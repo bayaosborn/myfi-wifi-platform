@@ -1,9 +1,9 @@
 """
-Contacts CRUD Routes - Supabase Integration
+Contacts CRUD Routes - Phone Auth Compatible
 All contact management operations
 """
 
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, redirect
 from functools import wraps
 from app.backend.supabase_client import supabase
 
@@ -12,11 +12,13 @@ contacts_bp = Blueprint('contacts', __name__)
 # ==================== HELPER FUNCTIONS ====================
 
 def login_required(f):
-    """Decorator to protect routes"""
+    """Decorator to protect routes - Phone Auth Compatible"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'access_token' not in session or 'user_id' not in session:
-            return jsonify({'error': 'Authentication required'}), 401
+        if 'user_id' not in session:
+            if request.path.startswith('/api/'):
+                return jsonify({'error': 'Authentication required'}), 401
+            return redirect('/login')
         return f(*args, **kwargs)
     return decorated_function
 
@@ -24,22 +26,14 @@ def get_user_id():
     """Get current user ID from session"""
     return session.get('user_id')
 
-def get_access_token():
-    """Get current access token from session"""
-    return session.get('access_token')
-
 # ==================== CRUD OPERATIONS ====================
 
 @contacts_bp.route('/api/contacts', methods=['GET'])
 @login_required
 def get_contacts():
-    """
-    Get all contacts for logged-in user with pagination
-    Query params: page, per_page, tag
-    """
+    """Get all contacts for logged-in user with pagination"""
     try:
         user_id = get_user_id()
-        access_token = get_access_token()
         
         # Get query params
         page = request.args.get('page', 1, type=int)
@@ -51,8 +45,8 @@ def get_contacts():
         if tag_filter:
             filters['tag'] = tag_filter
         
-        # Get contacts from Supabase
-        contacts = supabase.select('contacts', filters=filters, access_token=access_token)
+        # Get contacts from Supabase (no access_token needed)
+        contacts = supabase.select('contacts', filters=filters)
         
         # Sort by name
         contacts_sorted = sorted(contacts, key=lambda x: x.get('name', '').lower())
@@ -82,20 +76,12 @@ def get_contact(contact_id):
     """Get a single contact by ID"""
     try:
         user_id = get_user_id()
-        access_token = get_access_token()
         
         # Get contact (RLS ensures user can only see their own)
-        contacts = supabase.select(
-            'contacts',
-            filters={'id': contact_id, 'user_id': user_id},
-            access_token=access_token
-        )
+        contacts = supabase.select('contacts', filters={'id': contact_id, 'user_id': user_id})
         
         if contacts and len(contacts) > 0:
-            return jsonify({
-                'success': True,
-                'contact': contacts[0]
-            }), 200
+            return jsonify({'success': True, 'contact': contacts[0]}), 200
         else:
             return jsonify({'success': False, 'error': 'Contact not found'}), 404
             
@@ -109,7 +95,6 @@ def create_contact():
     """Create a new contact"""
     try:
         user_id = get_user_id()
-        access_token = get_access_token()
         data = request.get_json()
         
         # Validate required fields
@@ -129,7 +114,7 @@ def create_contact():
         }
         
         # Insert into Supabase
-        result = supabase.insert('contacts', contact_data, access_token=access_token)
+        result = supabase.insert('contacts', contact_data)
         
         if result['success']:
             return jsonify({
@@ -150,29 +135,20 @@ def update_contact(contact_id):
     """Update an existing contact"""
     try:
         user_id = get_user_id()
-        access_token = get_access_token()
         data = request.get_json()
         
-        # Prepare update data (only allow specific fields)
+        # Prepare update data
         allowed_fields = ['name', 'phone', 'email', 'tag', 'notes', 'is_favorite', 'is_emergency_contact']
         update_data = {k: v for k, v in data.items() if k in allowed_fields}
         
         if not update_data:
             return jsonify({'success': False, 'error': 'No valid fields to update'}), 400
         
-        # Update in Supabase (RLS ensures user can only update their own)
-        success = supabase.update(
-            'contacts',
-            filters={'id': contact_id, 'user_id': user_id},
-            data=update_data,
-            access_token=access_token
-        )
+        # Update in Supabase
+        success = supabase.update('contacts', {'id': contact_id, 'user_id': user_id}, update_data)
         
         if success:
-            return jsonify({
-                'success': True,
-                'message': 'Contact updated successfully'
-            }), 200
+            return jsonify({'success': True, 'message': 'Contact updated successfully'}), 200
         else:
             return jsonify({'success': False, 'error': 'Update failed'}), 400
             
@@ -186,20 +162,12 @@ def delete_contact(contact_id):
     """Delete a contact"""
     try:
         user_id = get_user_id()
-        access_token = get_access_token()
         
-        # Delete from Supabase (RLS ensures user can only delete their own)
-        success = supabase.delete(
-            'contacts',
-            filters={'id': contact_id, 'user_id': user_id},
-            access_token=access_token
-        )
+        # Delete from Supabase
+        success = supabase.delete('contacts', {'id': contact_id, 'user_id': user_id})
         
         if success:
-            return jsonify({
-                'success': True,
-                'message': 'Contact deleted successfully'
-            }), 200
+            return jsonify({'success': True, 'message': 'Contact deleted successfully'}), 200
         else:
             return jsonify({'success': False, 'error': 'Delete failed'}), 404
             
@@ -207,22 +175,19 @@ def delete_contact(contact_id):
         print(f"Delete contact error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ==================== SEARCH & FILTER ====================
-
 @contacts_bp.route('/api/contacts/search', methods=['GET'])
 @login_required
 def search_contacts():
     """Search contacts by name, phone, or email"""
     try:
         user_id = get_user_id()
-        access_token = get_access_token()
         query = request.args.get('q', '').strip().lower()
         
         if not query:
             return jsonify({'success': False, 'error': 'Search query required'}), 400
         
         # Get all user's contacts
-        contacts = supabase.select('contacts', filters={'user_id': user_id}, access_token=access_token)
+        contacts = supabase.select('contacts', filters={'user_id': user_id})
         
         # Filter by search query
         results = []
@@ -234,11 +199,7 @@ def search_contacts():
             if query in name or query in phone or query in email:
                 results.append(contact)
         
-        return jsonify({
-            'success': True,
-            'contacts': results,
-            'count': len(results)
-        }), 200
+        return jsonify({'success': True, 'contacts': results, 'count': len(results)}), 200
         
     except Exception as e:
         print(f"Search error: {e}")
@@ -250,14 +211,9 @@ def get_contacts_by_tag(tag):
     """Get all contacts with a specific tag"""
     try:
         user_id = get_user_id()
-        access_token = get_access_token()
         
         # Get contacts by tag
-        contacts = supabase.select(
-            'contacts',
-            filters={'user_id': user_id, 'tag': tag},
-            access_token=access_token
-        )
+        contacts = supabase.select('contacts', filters={'user_id': user_id, 'tag': tag})
         
         # Sort by name
         contacts_sorted = sorted(contacts, key=lambda x: x.get('name', '').lower())
@@ -273,26 +229,19 @@ def get_contacts_by_tag(tag):
         print(f"Get by tag error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ==================== BULK OPERATIONS ====================
-
 @contacts_bp.route('/api/contacts/delete-all', methods=['DELETE'])
 @login_required
 def delete_all_contacts():
     """Delete ALL contacts for the current user"""
     try:
         user_id = get_user_id()
-        access_token = get_access_token()
         
         # Get count before deletion
-        contacts = supabase.select('contacts', filters={'user_id': user_id}, access_token=access_token)
+        contacts = supabase.select('contacts', filters={'user_id': user_id})
         count = len(contacts)
         
         # Delete all user's contacts
-        success = supabase.delete(
-            'contacts',
-            filters={'user_id': user_id},
-            access_token=access_token
-        )
+        success = supabase.delete('contacts', {'user_id': user_id})
         
         if success:
             return jsonify({
@@ -305,4 +254,20 @@ def delete_all_contacts():
             
     except Exception as e:
         print(f"Delete all error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@contacts_bp.route('/api/contacts/count', methods=['GET'])
+@login_required
+def get_contacts_count():
+    """Get total count of user's contacts"""
+    try:
+        user_id = get_user_id()
+        
+        # Get count
+        total = supabase.count('contacts', filters={'user_id': user_id})
+        
+        return jsonify({'success': True, 'total': total}), 200
+        
+    except Exception as e:
+        print(f"Count error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500

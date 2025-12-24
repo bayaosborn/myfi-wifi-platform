@@ -10,28 +10,11 @@
 
 
 
-<!-- Manifest -->
-<link rel="manifest" href="/manifest.json">
 
-<!-- Service Worker registration -->
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(reg => console.log('SW registered:', reg))
-      .catch(err => console.error('SW registration failed:', err));
-  });
-}
-</script>
 
 
     
-<!-- PWA Meta Tags -->
-<meta name="description" content="Organize your contacts with AI-powered relationship intelligence">
-<meta name="theme-color" content="#0051ff">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MyFi">
+
 
 
 <!-- Icons -->
@@ -41,7 +24,8 @@ if ('serviceWorker' in navigator) {
 
 <link rel="stylesheet" href="/static/css/main.css">
 
-
+<!-- In index.html <head> -->
+<link rel="stylesheet" href="/static/css/logicSearch.css">
     
 </head>
 
@@ -116,7 +100,7 @@ if ('serviceWorker' in navigator) {
 
     
     <!-- CONTACTS STATS CARD -->
-    <div id="contactsStatsCard" class="contacts-stats-card">
+    <div id="contactStatsCard" class="contacts-stats-card">
         <div id="contactsCountNumber" class="stats-number">0</div>
         <div class="stats-label">Contacts</div>
 
@@ -132,19 +116,7 @@ if ('serviceWorker' in navigator) {
 
 
 
-    <!-- LOGIC -->
-    <div class="logic-card">
-        <div class="logic-title">Logic</div>
-        <div class="logic-text">
-            You haven't called <b>Sarah</b> in 2 days.<br>
-            She is active in the mornings.<br>
-            Consider giving her a quick check-in.
-        </div>
 
-        <a href="#" class="logic-link">
-            <button class="logic-btn">Chat with Logic</button>
-        </a>
-    </div>
 
     
 
@@ -275,13 +247,46 @@ if ('serviceWorker' in navigator) {
     };
 </script>
 
+
+
+
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('contactSearchInput');
+    if (!input) return;
+
+    const placeholders = [
+        'Search Contacts....',
+        'Ask Logic: "Call Sarah"',
+        'Ask Logic: "Email my lecturer"',
+        'Ask Logic: "Message John"'
+    ];
+
+    let index = 0;
+    input.placeholder = placeholders[index];
+
+    setInterval(() => {
+        index = (index + 1) % placeholders.length;
+        input.placeholder = placeholders[index];
+    }, 3500);
+});
+</script>
+
+
+
 <script src="/static/js/contacts/mainCardDisplay.js"></script>
-<script src="/static/js/contactsFile.js"></script>
-<script src="/static/js/addCustomContactBtn.js"></script>
+    
+
+<script src="/static/js/contacts/addCustomContactBtn.js"></script>
 <script src="/static/js/contacts/editButton.js"></script>
-<script src="/static/js/contactsLoader.js"></script>
-<script src="/static/js/logicIntegration.js"></script>
+
+
 <script src="/static/js/uploadContactsFile.js"></script>
+    
+<script src="/static/js/logic/logicSearch.js"></script>
 
 
     

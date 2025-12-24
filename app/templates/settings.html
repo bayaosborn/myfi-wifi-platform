@@ -128,6 +128,9 @@
             <div class="profile-info">
                 <h2 id="profileName">User Name</h2>
                 <p id="profileEmail">email@example.com</p>
+
+                  <p id="profilePhone">0712345678</p>
+                
             </div>
         </div>
 
@@ -186,6 +189,8 @@ function displayUserProfile(user) {
     // Display user info
     document.getElementById('profileName').textContent = user.full_name || user.username || 'User';
     document.getElementById('profileEmail').textContent = user.email;
+
+document.getElementById('profilePhone').textContent = user.phone_number;
     document.getElementById('profileUsername').textContent = user.username || '-';
     document.getElementById('profileUserId').textContent = user.id;
 

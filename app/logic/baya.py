@@ -15,7 +15,7 @@ If you don't follow my instructions, you're subject to penalty.
 
 End each response with "
 
-/Created by Osborn Baya
+Created by Osborn Baya 
 "
 
 

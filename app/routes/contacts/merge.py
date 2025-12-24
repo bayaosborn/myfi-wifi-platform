@@ -1,10 +1,9 @@
 """
-Contacts Merge Routes - Duplicate Detection & Merging
+Contacts Merge Routes - Phone Auth Compatible
 Find and merge duplicate contacts based on phone number
-FIXED: Simple logic matching SQLite version
 """
 
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, redirect
 from functools import wraps
 from app.backend.supabase_client import supabase
 
@@ -13,11 +12,13 @@ cont_merge_bp = Blueprint('cont_merge', __name__)
 # ==================== HELPER FUNCTIONS ====================
 
 def login_required(f):
-    """Decorator to protect routes"""
+    """Decorator to protect routes - Phone Auth Compatible"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or 'user_id' not in session:
-            return jsonify({'error': 'Authentication required'}), 401
+        if 'user_id' not in session:
+            if request.path.startswith('/api/'):
+                return jsonify({'error': 'Authentication required'}), 401
+            return redirect('/login')
         return f(*args, **kwargs)
     return decorated_function
 
@@ -26,22 +27,14 @@ def login_required(f):
 @cont_merge_bp.route('/api/contacts/find-duplicates', methods=['GET'])
 @login_required
 def find_duplicate_contacts():
-    """
-    Find contacts with duplicate phone numbers
-    Simple logic: Group by phone, count duplicates
-    """
+    """Find contacts with duplicate phone numbers"""
     try:
         user_id = session.get('user_id')
-        access_token = session.get('access_token')
         
         print(f"🔍 Finding duplicates for user {user_id}")
         
         # Get all user's contacts with phone numbers
-        contacts = supabase.select(
-            'contacts', 
-            filters={'user_id': user_id}, 
-            access_token=access_token
-        )
+        contacts = supabase.select('contacts', filters={'user_id': user_id})
         
         if not contacts:
             return jsonify({
@@ -50,11 +43,11 @@ def find_duplicate_contacts():
                 'total_duplicate_contacts': 0
             }), 200
         
-        # Group by phone number (Python equivalent of SQL GROUP BY)
+        # Group by phone number
         phone_count = {}
         for contact in contacts:
             phone = contact.get('phone', '').strip()
-            if phone:  # Only count non-empty phones
+            if phone:
                 phone_count[phone] = phone_count.get(phone, 0) + 1
         
         # Find phones that appear more than once
@@ -90,23 +83,14 @@ def find_duplicate_contacts():
 @cont_merge_bp.route('/api/contacts/merge-duplicates', methods=['POST'])
 @login_required
 def merge_duplicate_contacts():
-    """
-    Merge contacts with same phone number
-    Strategy: Keep most complete contact, combine notes, delete duplicates
-    MATCHES SQLite version logic
-    """
+    """Merge contacts with same phone number"""
     try:
         user_id = session.get('user_id')
-        access_token = session.get('access_token')
         
         print(f"🔀 Merging duplicates for user {user_id}")
         
         # Get all user's contacts
-        contacts = supabase.select(
-            'contacts',
-            filters={'user_id': user_id},
-            access_token=access_token
-        )
+        contacts = supabase.select('contacts', filters={'user_id': user_id})
         
         if not contacts:
             return jsonify({
@@ -148,7 +132,7 @@ def merge_duplicate_contacts():
             
             print(f"  📞 Merging {len(contacts_list)} contacts with phone: {phone}")
             
-            # Calculate completeness score (matches SQLite logic)
+            # Calculate completeness score
             def completeness_score(contact):
                 score = 0
                 if contact.get('name'): score += 1
@@ -157,15 +141,12 @@ def merge_duplicate_contacts():
                 if contact.get('tag'): score += 1
                 return score
             
-            # Sort by created at, removed sort by completeness
+            # Sort by completeness and created_at
             sorted_contacts = sorted(
-    contacts_list,
-    key=lambda c: (
-        completeness_score(c),
-        c.get("created_at", "")  # fallback: lexicographical sort
-    ),
-    reverse=True
-)
+                contacts_list,
+                key=lambda c: (completeness_score(c), c.get("created_at", "")),
+                reverse=True
+            )
             
             keeper = sorted_contacts[0]
             duplicates_to_delete = sorted_contacts[1:]
@@ -173,7 +154,7 @@ def merge_duplicate_contacts():
             print(f"    ✓ Keeper: {keeper.get('name')} (ID: {keeper.get('id')})")
             print(f"    ✗ Deleting {len(duplicates_to_delete)} duplicates")
             
-            # Combine all notes (matches SQLite logic)
+            # Combine all notes
             all_notes = []
             for contact in contacts_list:
                 if contact.get('notes'):
@@ -181,23 +162,14 @@ def merge_duplicate_contacts():
             
             combined_notes = " | ".join(all_notes) if all_notes else keeper.get('notes', '')
             
-            # Update keeper with combined notes (if changed)
+            # Update keeper with combined notes
             if combined_notes != keeper.get('notes'):
                 print(f"    📝 Updating notes for keeper")
-                supabase.update(
-                    'contacts',
-                    filters={'id': keeper['id'], 'user_id': user_id},
-                    data={'notes': combined_notes},
-                    access_token=access_token
-                )
+                supabase.update('contacts', {'id': keeper['id'], 'user_id': user_id}, {'notes': combined_notes})
             
             # Delete duplicates
             for dup in duplicates_to_delete:
-                success = supabase.delete(
-                    'contacts',
-                    filters={'id': dup['id'], 'user_id': user_id},
-                    access_token=access_token
-                )
+                success = supabase.delete('contacts', {'id': dup['id'], 'user_id': user_id})
                 if success:
                     deleted_count += 1
                     print(f"      ✗ Deleted: {dup.get('name')} (ID: {dup.get('id')})")

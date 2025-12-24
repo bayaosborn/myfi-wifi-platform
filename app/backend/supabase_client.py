@@ -1,6 +1,6 @@
 """
-Supabase Client - REST API Implementation (FIXED)
-Uses direct HTTP calls to avoid library version conflicts
+Supabase Client - REST API Implementation
+Updated for Phone Authentication (NO Supabase Auth)
 """
 
 import os
@@ -22,102 +22,26 @@ if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     )
 
 class SupabaseClient:
-    """Simple Supabase client using REST API"""
+    """Simple Supabase client using REST API - Phone Auth Compatible"""
     
     def __init__(self):
         self.url = SUPABASE_URL
         self.key = SUPABASE_ANON_KEY
-        self.auth_url = f"{self.url}/auth/v1"
         self.rest_url = f"{self.url}/rest/v1"
         
-    def _get_headers(self, access_token=None):
+    def _get_headers(self):
         """Get headers for API requests"""
         headers = {
             'apikey': self.key,
             'Content-Type': 'application/json',
-            'Prefer': 'return=representation'  # IMPORTANT: Return inserted data
+            'Prefer': 'return=representation'
         }
-        if access_token:
-            headers['Authorization'] = f'Bearer {access_token}'
         return headers
     
-    # ==================== AUTH METHODS ====================
-    
-    def sign_up(self, email, password, user_metadata=None):
-        """Sign up a new user"""
-        try:
-            response = requests.post(
-                f"{self.auth_url}/signup",
-                headers=self._get_headers(),
-                json={
-                    'email': email,
-                    'password': password,
-                    'data': user_metadata or {}
-                }
-            )
-            
-            if response.status_code == 200:
-                return {'success': True, 'data': response.json()}
-            else:
-                error_data = response.json()
-                return {'success': False, 'error': error_data.get('msg', 'Signup failed')}
-                
-        except Exception as e:
-            return {'success': False, 'error': str(e)}
-    
-    def sign_in(self, email, password):
-        """Sign in existing user"""
-        try:
-            response = requests.post(
-                f"{self.auth_url}/token?grant_type=password",
-                headers=self._get_headers(),
-                json={
-                    'email': email,
-                    'password': password
-                }
-            )
-            
-            if response.status_code == 200:
-                return {'success': True, 'data': response.json()}
-            else:
-                error_data = response.json()
-                return {'success': False, 'error': error_data.get('error_description', 'Login failed')}
-                
-        except Exception as e:
-            return {'success': False, 'error': str(e)}
-    
-    def sign_out(self, access_token):
-        """Sign out user"""
-        try:
-            response = requests.post(
-                f"{self.auth_url}/logout",
-                headers=self._get_headers(access_token)
-            )
-            return {'success': True}
-        except Exception as e:
-            return {'success': False, 'error': str(e)}
-    
-    def get_user(self, access_token):
-        """Get user from access token"""
-        try:
-            response = requests.get(
-                f"{self.auth_url}/user",
-                headers=self._get_headers(access_token)
-            )
-            
-            if response.status_code == 200:
-                return response.json()
-            else:
-                return None
-                
-        except Exception as e:
-            print(f"Error getting user: {e}")
-            return None
-    
-    # ==================== DATABASE METHODS (FIXED) ====================
+    # ==================== DATABASE METHODS ====================
     
     def select(self, table, filters=None, access_token=None):
-        """Query table"""
+        """Query table (access_token ignored for backward compatibility)"""
         try:
             url = f"{self.rest_url}/{table}?select=*"
             
@@ -128,7 +52,7 @@ class SupabaseClient:
             
             response = requests.get(
                 url,
-                headers=self._get_headers(access_token)
+                headers=self._get_headers()
             )
             
             if response.status_code == 200:
@@ -143,8 +67,7 @@ class SupabaseClient:
     
     def insert(self, table, data, access_token=None):
         """
-        Insert row(s) into table
-        FIXED: Properly handle both single object and array
+        Insert row(s) into table (access_token ignored for backward compatibility)
         """
         try:
             # Ensure data is a list for bulk insert
@@ -155,24 +78,21 @@ class SupabaseClient:
             
             response = requests.post(
                 f"{self.rest_url}/{table}",
-                headers=self._get_headers(access_token),
+                headers=self._get_headers(),
                 json=insert_data
             )
             
             print(f"📥 Response status: {response.status_code}")
             
             if response.status_code in [200, 201]:
-                # Successfully inserted
                 try:
                     result_data = response.json()
                     print(f"✅ Inserted {len(result_data)} rows")
                     return {'success': True, 'data': result_data}
                 except Exception as json_error:
-                    # If JSON parsing fails, still return success
-                    print(f"⚠️ JSON parse error (but insert likely succeeded): {json_error}")
+                    print(f"⚠️ JSON parse error: {json_error}")
                     return {'success': True, 'data': insert_data}
             else:
-                # Failed to insert
                 error_text = response.text
                 print(f"❌ Insert failed: {error_text}")
                 try:
@@ -190,7 +110,7 @@ class SupabaseClient:
             return {'success': False, 'error': str(e)}
     
     def update(self, table, filters, data, access_token=None):
-        """Update rows in table"""
+        """Update rows in table (access_token ignored for backward compatibility)"""
         try:
             url = f"{self.rest_url}/{table}"
             
@@ -203,7 +123,7 @@ class SupabaseClient:
             
             response = requests.patch(
                 url,
-                headers=self._get_headers(access_token),
+                headers=self._get_headers(),
                 json=data
             )
             
@@ -214,7 +134,7 @@ class SupabaseClient:
             return False
     
     def delete(self, table, filters, access_token=None):
-        """Delete rows from table"""
+        """Delete rows from table (access_token ignored for backward compatibility)"""
         try:
             url = f"{self.rest_url}/{table}"
             
@@ -227,7 +147,7 @@ class SupabaseClient:
             
             response = requests.delete(
                 url,
-                headers=self._get_headers(access_token)
+                headers=self._get_headers()
             )
             
             return response.status_code in [200, 204]
@@ -235,6 +155,41 @@ class SupabaseClient:
         except Exception as e:
             print(f"Delete error: {e}")
             return False
+    
+    def count(self, table, filters=None, access_token=None):
+        """Get count of rows (access_token ignored for backward compatibility)"""
+        try:
+            url = f"{self.rest_url}/{table}?select=id"
+            
+            # Add filters
+            if filters:
+                for k, v in filters.items():
+                    url += f"&{k}=eq.{v}"
+            
+            # Request with count header
+            headers = self._get_headers()
+            headers['Prefer'] = 'count=exact'
+            
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                # Try to get count from Content-Range header
+                content_range = response.headers.get('Content-Range', '')
+                
+                if '/' in content_range:
+                    total = int(content_range.split('/')[-1])
+                    return total
+                
+                # Fallback: count returned data
+                data = response.json()
+                return len(data)
+            
+            return 0
+            
+        except Exception as e:
+            print(f"Count error: {str(e)}")
+            return 0
+
 
 # Global client instance
 supabase = SupabaseClient()
