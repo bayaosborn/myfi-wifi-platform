@@ -57,6 +57,8 @@
         <img src="/static/images/logo.png" alt="MyFi Logo">
     </a>
 
+    
+
     <a href="/settings" class="settings-card">
         <div class="settings-icon">⚙️</div>
     </a>
@@ -64,17 +66,28 @@
 
     <!-- Hero -->
 
-    <h1 style="text-align: center; margin-top: 10px; font-size: 24px; font-family: sans-serif; color: #0058fc; "> Myfi - Organize Contacts </h1>
 
-<!-- SEARCH BAR -->
+
+    <h1 id="heroTitle" class="myfi-title"></h1>
+    
+
+
 <div class="search-container">
-    <input 
-        type="text" 
-        id="contactSearchInput" 
-        placeholder="Search contacts..."
+    <textarea
+        id="contactSearchInput"
+        placeholder="Search contacts or ask Logic…"
         class="search-input"
-    >
+        rows="1"
+    ></textarea>
+
+    <button id="micBtn" class="mic-btn">🎤</button>
 </div>
+
+
+    
+
+
+    
 
 <div class="container">
 
@@ -209,36 +222,7 @@
 </div>
 
 
-<!-- PWA Registration -->
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/static/service-worker.js')
-                .then((registration) => {
-                    console.log('✓ ServiceWorker registered:', registration.scope);
-                })
-                .catch((error) => {
-                    console.error('✗ ServiceWorker registration failed:', error);
-                });
-        });
-    }
 
-    // Detect if app is installed
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        console.log('💡 MyFi can be installed as an app!');
-        
-        // Optional: Show install button
-        // showInstallButton();
-    });
-
-    window.addEventListener('appinstalled', () => {
-        console.log('✓ MyFi installed as PWA');
-        deferredPrompt = null;
-    });
-</script>
 
     
 
@@ -294,6 +278,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("contactSearchInput");
+
+    const autoResize = () => {
+        input.style.height = "auto";
+        input.style.height = Math.min(input.scrollHeight, 160) + "px";
+    };
+
+    input.addEventListener("input", autoResize);
+
+    // Initial resize (in case value is pre-filled)
+    autoResize();
+});
+</script>
+
+    
+
+
+
+<script src="/static/js/ui/hero.js"></script>
+    
+
 <script src="/static/js/contacts/mainCardDisplay.js"></script>
     
 
@@ -302,8 +309,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 <script src="/static/js/uploadContactsFile.js"></script>
+
+
+<!-- Before logicSearch.js -->
+<script src="/static/js/interactions/tracking.js"></script>
+
+<script src="/static/js/logic/speech.js"></script>
     
 <script src="/static/js/logic/logicSearch.js"></script>
+    
+
 
 
     
