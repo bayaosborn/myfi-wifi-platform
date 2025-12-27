@@ -13,6 +13,6 @@ bcrypt==5.0.0
 requests==2.31.0
 
 
-httpx>=0.24.0
-httpcore>=0.16.0
+# IMPORTANT
+httpx>=0.26,<0.28
 
