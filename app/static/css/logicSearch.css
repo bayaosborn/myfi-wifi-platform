@@ -23,6 +23,47 @@
     font-weight: 500;
 }
 
+
+/* Add to logicSearch.css */
+
+.mic-btn {
+    position: absolute;
+    right: 50px;  /* Next to Logic button */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border: 2px solid #e0e0e0;
+    border-radius: 50%;
+    background: white;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.mic-btn:hover {
+    border-color: #4caf50;
+    background: #f1f8f4;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.mic-btn.listening {
+    border-color: #f44336;
+    background: #ffebee;
+    animation: pulse-mic 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-mic {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+    }
+}
+
+
 /* ========================================
    LOGIC TRIGGER BUTTON
    ======================================== */
