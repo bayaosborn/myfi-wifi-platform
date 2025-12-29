@@ -1,6 +1,6 @@
 """
-Logic Engine - Ultra Simplified
-Handles call, message, email commands
+Logic Engine - With Memory System
+Handles call, message, email commands with context awareness
 """
 
 from groq import Groq
@@ -9,6 +9,8 @@ import json
 
 from app.backend.supabase_client import supabase
 from app.logic.helpers import get_current_date, get_current_time
+from app.logic.security.abuse import is_safe, get_abuse_rules
+from app.logic.memory.memory_manager import MemoryManager  # ← ADD MEMORY
 
 
 class LogicEngine:
@@ -22,10 +24,15 @@ class LogicEngine:
         self.user_id = user_id
         self.groq = Groq(api_key=os.getenv('GROQ_API_KEY'))
         self.model = 'llama-3.3-70b-versatile'
+        
+        # ← INITIALIZE MEMORY
+        self.memory = MemoryManager(user_id)
+        
+        print(f"✓ Logic engine initialized for user {user_id[:8]}... with memory")
 
     def chat(self, message: str) -> dict:
         """
-        Process user message
+        Process user message with memory context
 
         Args:
             message: What user typed (e.g., "Call Sarah")
@@ -37,11 +44,34 @@ class LogicEngine:
             }
         """
         try:
+            # ========================================
+            # 🛡️ QUICK ABUSE CHECK (NO CONVERSATION)
+            # ========================================
+            if not is_safe(message):
+                # Silent ignore - no response, no error
+                return {
+                    'response': '',
+                    'hidden_commands': []
+                }
+            
+            # ========================================
+            # 🧠 GET MEMORY CONTEXT
+            # ========================================
+            memory_context = self.memory.get_context(message)
+            
+            # ========================================
+            # ✅ SAFE: PROCEED NORMALLY
+            # ========================================
+            
             # 1. Get user's contacts as JSON (for AI to parse)
             contacts_json = self._get_contacts_json()
 
-            # 2. Build prompt with context
-            system_prompt = self._build_system_prompt(contacts_json, message)
+            # 2. Build prompt with context + memory
+            system_prompt = self._build_system_prompt(
+                contacts_json, 
+                message,
+                memory_context  # ← PASS MEMORY
+            )
 
             # 3. Call Groq
             response = self.groq.chat.completions.create(
@@ -77,12 +107,36 @@ class LogicEngine:
 
                 if command and command.get('action') in ['call', 'message', 'email']:
                     result['hidden_commands'].append(command)
+                
+                # ========================================
+                # 💾 SAVE TO MEMORY
+                # ========================================
+                metadata = {
+                    'action_type': command.get('action') if command else None,
+                    'contact_id': command.get('contact_id') if command else None,
+                    'contact_name': command.get('contact_name') if command else None,
+                    'success': bool(command)
+                }
+                
+                self.memory.save_exchange(
+                    user_message=message,
+                    logic_response=user_message,
+                    metadata=metadata
+                )
 
                 return result
 
             except json.JSONDecodeError as e:
                 print(f"JSON parse error: {e}")
                 print(f"AI response was: {ai_response}")
+                
+                # Still save to memory (failed attempt)
+                self.memory.save_exchange(
+                    user_message=message,
+                    logic_response=ai_response,
+                    metadata={'success': False, 'error': 'json_parse_error'}
+                )
+                
                 return {
                     'response': ai_response,
                     'hidden_commands': []
@@ -130,22 +184,45 @@ class LogicEngine:
             print(f"Error getting contacts: {e}")
             return "[]"
 
-    def _build_system_prompt(self, contacts_json: str, user_message: str) -> str:
+    def _build_system_prompt(
+        self, 
+        contacts_json: str, 
+        user_message: str,
+        memory_context: str = ""  # ← NEW PARAMETER
+    ) -> str:
         """
-        Build complete system prompt with all examples
+        Build complete system prompt with memory context
+        
+        Args:
+            contacts_json: User's contacts
+            user_message: Current message
+            memory_context: Recent conversation + patterns
         """
         current_date = get_current_date()
         current_time = get_current_time()
+        abuse_rules = get_abuse_rules()
+
+        # ← ADD MEMORY TO PROMPT (if exists)
+        memory_section = ""
+        if memory_context:
+            memory_section = f"""
+{memory_context}
+
+Use this context to understand follow-up questions and user preferences.
+"""
 
         return f"""You are Logic, an AI for MyFi contact manager.
 
 USER'S CONTACTS (as JSON):
 {contacts_json}
 
+{memory_section}
+
 YOUR JOB:
 1. Understand what user wants to do
 2. Find the contact in the JSON above
-3. Return a response + hidden JSON command
+3. Use memory context for follow-ups (e.g., "her" = last person mentioned)
+4. Return a response + hidden JSON command
 
 RESPONSE FORMAT:
 {{
@@ -161,11 +238,72 @@ RESPONSE FORMAT:
     }}
 }}
 
+{abuse_rules}
+
+EXAMPLES:
+
+User: "Call Sarah"
+{{
+    "response": "Calling Sarah...",
+    "command": {{
+        "action": "call",
+        "contact_id": "abc-123",
+        "contact_name": "Sarah",
+        "phone": "0742107097"
+    }}
+}}
+
+User: "Message mom"
+{{
+    "response": "Messaging Mom...",
+    "command": {{
+        "action": "message",
+        "contact_id": "xyz-789",
+        "contact_name": "Mom",
+        "phone": "0700123456"
+    }}
+}}
+
+User: "Email my lecturer about being sick"
+{{
+    "response": "Drafting email to lecturer...",
+    "command": {{
+        "action": "email",
+        "contact_id": "def-456",
+        "contact_name": "Dr. Smith",
+        "email": "smith@university.edu",
+        "subject": "Unable to Attend Class",
+        "body": "Dear Dr. Smith,\\n\\nI am writing to inform you that I am currently unwell and will be unable to attend class.\\n\\nThank you for your understanding.\\n\\nBest regards"
+    }}
+}}
+
+User: "Call Bob" (Bob not in contacts)
+{{
+    "response": "I couldn't find Bob in your contacts.",
+    "command": null
+}}
+
+FOLLOW-UP EXAMPLE (using memory):
+Previous: User called Sarah Johnson
+User: "Message her too"
+{{
+    "response": "Messaging Sarah Johnson...",
+    "command": {{
+        "action": "message",
+        "contact_id": "abc-123",
+        "contact_name": "Sarah Johnson",
+        "phone": "0742107097"
+    }}
+}}
+
 RULES:
 - ALWAYS respond in valid JSON
-- If contact not found, set command to null
-- Use phone/email from contacts JSON
+- If contact not found, set command to null and tell user
+- ONLY use contacts from the JSON above
+- NEVER use phone numbers or emails not in the JSON
 - Keep response short (1 sentence)
+- Be direct: just execute, don't ask for confirmation
+- Use memory context to resolve "her", "him", "them", etc.
 
 CURRENT CONTEXT:
 - Today is: {current_date}
