@@ -77,6 +77,59 @@ body, button, input, textarea, select {
 
 
 
+
+/* ---------------------------------------------
+   MYFI HISTORY BUTTON (Blue Action Button)
+---------------------------------------------- */
+.history-btn {
+    display: block;
+    margin: 20px auto 0 auto;
+    padding: 14px 20px;
+
+    background: #0051ff; 
+    color: white;
+    border: none;
+    border-radius: 14px;
+
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+
+    cursor: pointer;
+    width: 90%;
+    max-width: 320px;
+
+    transition: 0.25s ease;
+    box-shadow: 0 4px 10px rgba(0, 81, 255, 0.25);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.history-btn:hover {
+    background: #0041d6;
+    box-shadow: 0 6px 14px rgba(0, 81, 255, 0.35);
+    transform: translateY(-2px);
+}
+
+.history-btn:active {
+    transform: scale(0.98);
+}
+
+.history-btn:disabled {
+    background: #8fb4ff;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+
+
+
+
+
 /* ---------------------------------------------
    MYFI LOGOUT BUTTON (Blue Action Button)
 ---------------------------------------------- */
