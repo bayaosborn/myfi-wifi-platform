@@ -1,6 +1,6 @@
 """
 Logic Engine - With Memory System
-Handles call, message, email commands with context awareness
+Handles call, message, email, add_contact, edit_contact commands
 """
 
 from groq import Groq
@@ -10,7 +10,8 @@ import json
 from app.backend.supabase_client import supabase
 from app.logic.helpers import get_current_date, get_current_time
 from app.logic.security.abuse import is_safe, get_abuse_rules
-from app.logic.memory.memory_manager import MemoryManager  # ← ADD MEMORY
+from app.logic.memory.memory_manager import MemoryManager
+from app.logic.contacts.examples import get_contact_examples  # ← NEW
 
 
 class LogicEngine:
@@ -25,17 +26,17 @@ class LogicEngine:
         self.groq = Groq(api_key=os.getenv('GROQ_API_KEY'))
         self.model = 'llama-3.3-70b-versatile'
         
-        # ← INITIALIZE MEMORY
+        # Initialize memory
         self.memory = MemoryManager(user_id)
         
-        print(f"✓ Logic engine initialized for user {user_id[:8]}... with memory")
+        print(f"✅ Logic engine initialized for user {user_id[:8]}... with memory")
 
     def chat(self, message: str) -> dict:
         """
         Process user message with memory context
 
         Args:
-            message: What user typed (e.g., "Call Sarah")
+            message: What user typed (e.g., "Call Sarah" or "add Sarah 0712345678")
 
         Returns:
             {
@@ -45,10 +46,9 @@ class LogicEngine:
         """
         try:
             # ========================================
-            # 🛡️ QUICK ABUSE CHECK (NO CONVERSATION)
+            # 🛡️ QUICK ABUSE CHECK
             # ========================================
             if not is_safe(message):
-                # Silent ignore - no response, no error
                 return {
                     'response': '',
                     'hidden_commands': []
@@ -60,17 +60,17 @@ class LogicEngine:
             memory_context = self.memory.get_context(message)
             
             # ========================================
-            # ✅ SAFE: PROCEED NORMALLY
+            # ✅ PROCEED NORMALLY
             # ========================================
             
-            # 1. Get user's contacts as JSON (for AI to parse)
+            # 1. Get user's contacts as JSON
             contacts_json = self._get_contacts_json()
 
             # 2. Build prompt with context + memory
             system_prompt = self._build_system_prompt(
                 contacts_json, 
                 message,
-                memory_context  # ← PASS MEMORY
+                memory_context
             )
 
             # 3. Call Groq
@@ -105,7 +105,10 @@ class LogicEngine:
                     'hidden_commands': []
                 }
 
-                if command and command.get('action') in ['call', 'message', 'email']:
+                # ← EXPANDED VALID ACTIONS
+                valid_actions = ['call', 'message', 'email', 'add_contact', 'edit_contact']
+                
+                if command and command.get('action') in valid_actions:
                     result['hidden_commands'].append(command)
                 
                 # ========================================
@@ -188,10 +191,10 @@ class LogicEngine:
         self, 
         contacts_json: str, 
         user_message: str,
-        memory_context: str = ""  # ← NEW PARAMETER
+        memory_context: str = ""
     ) -> str:
         """
-        Build complete system prompt with memory context
+        Build complete system prompt with memory context and contact examples
         
         Args:
             contacts_json: User's contacts
@@ -201,8 +204,9 @@ class LogicEngine:
         current_date = get_current_date()
         current_time = get_current_time()
         abuse_rules = get_abuse_rules()
+        contact_examples = get_contact_examples()  # ← GET FULL EXAMPLES
 
-        # ← ADD MEMORY TO PROMPT (if exists)
+        # Memory section
         memory_section = ""
         if memory_context:
             memory_section = f"""
@@ -220,7 +224,7 @@ USER'S CONTACTS (as JSON):
 
 YOUR JOB:
 1. Understand what user wants to do
-2. Find the contact in the JSON above
+2. Find contacts in the JSON OR add/edit contacts
 3. Use memory context for follow-ups (e.g., "her" = last person mentioned)
 4. Return a response + hidden JSON command
 
@@ -228,19 +232,23 @@ RESPONSE FORMAT:
 {{
     "response": "Human-readable message to show user",
     "command": {{
-        "action": "call|message|email",
+        "action": "call|message|email|add_contact|edit_contact",
         "contact_id": "uuid-here",
         "contact_name": "Name",
         "phone": "0712345678",
         "email": "person@email.com",
         "subject": "Subject",
-        "body": "Body text"
+        "body": "Body text",
+        "tag": "Work",
+        "name": "New Name"
     }}
 }}
 
 {abuse_rules}
 
-EXAMPLES:
+===========================================
+QUICK EXAMPLES
+===========================================
 
 User: "Call Sarah"
 {{
@@ -253,62 +261,51 @@ User: "Call Sarah"
     }}
 }}
 
-User: "Message mom"
+User: "add Sarah 0712345678"
 {{
-    "response": "Messaging Mom...",
+    "response": "Adding Sarah...",
     "command": {{
-        "action": "message",
-        "contact_id": "xyz-789",
-        "contact_name": "Mom",
-        "phone": "0700123456"
+        "action": "add_contact",
+        "name": "Sarah",
+        "phone": "0712345678"
     }}
 }}
 
-User: "Email my lecturer about being sick"
+User: "change Sarah's phone to 0798765432"
 {{
-    "response": "Drafting email to lecturer...",
+    "response": "Updating Sarah's phone...",
     "command": {{
-        "action": "email",
-        "contact_id": "def-456",
-        "contact_name": "Dr. Smith",
-        "email": "smith@university.edu",
-        "subject": "Unable to Attend Class",
-        "body": "Dear Dr. Smith,\\n\\nI am writing to inform you that I am currently unwell and will be unable to attend class.\\n\\nThank you for your understanding.\\n\\nBest regards"
-    }}
-}}
-
-User: "Call Bob" (Bob not in contacts)
-{{
-    "response": "I couldn't find Bob in your contacts.",
-    "command": null
-}}
-
-FOLLOW-UP EXAMPLE (using memory):
-Previous: User called Sarah Johnson
-User: "Message her too"
-{{
-    "response": "Messaging Sarah Johnson...",
-    "command": {{
-        "action": "message",
+        "action": "edit_contact",
         "contact_id": "abc-123",
-        "contact_name": "Sarah Johnson",
-        "phone": "0742107097"
+        "contact_name": "Sarah",
+        "phone": "0798765432"
     }}
 }}
 
-RULES:
+===========================================
+DETAILED EXAMPLES & RULES
+===========================================
+
+{contact_examples}
+
+===========================================
+CRITICAL RULES
+===========================================
+
 - ALWAYS respond in valid JSON
 - If contact not found, set command to null and tell user
 - ONLY use contacts from the JSON above
-- NEVER use phone numbers or emails not in the JSON
+- NEVER use phone numbers or emails not in the JSON (except when adding new contact)
 - Keep response short (1 sentence)
 - Be direct: just execute, don't ask for confirmation
 - Use memory context to resolve "her", "him", "them", etc.
+- For add_contact: Need at least phone OR email
+- For edit_contact: Must have contact_id from JSON
+- NEVER delete contacts - this action is NOT allowed
 
 CURRENT CONTEXT:
 - Today is: {current_date}
 - Time: {current_time}
-- When user says "tomorrow", include actual date
 
 User message: {user_message}
 """
