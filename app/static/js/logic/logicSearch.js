@@ -145,7 +145,11 @@ class LogicSearch {
                 this.executeMessage(cmd);
             } else if (cmd.action === 'email') {
             this.executeEmail(cmd);
-        }
+        } else if (cmd.action === 'add_contact') {
+            this.executeAddContact(cmd);
+        } else if (cmd.action === 'edit_contact') {
+            this.executeEditContact(cmd);
+            }
         });
     }
     
@@ -162,9 +166,19 @@ class LogicSearch {
         const cleanPhone = phone.replace(/\s+/g, '');
         
         console.log(`📞 Calling ${name} at ${cleanPhone}`);
+
+
+
+
         
         // Trigger phone app
         window.location.href = `tel:${cleanPhone}`;
+
+                // ✅ TRACK THIS ACTION
+    if (typeof tracker !== 'undefined') {
+        tracker.logInteraction(contactId, 'call', 'logic');
+    }
+    
     }
     
     executeMessage(command) {
@@ -184,9 +198,17 @@ class LogicSearch {
         const encodedMessage = encodeURIComponent(messageBody);
         
         console.log(`💬 Messaging ${name} at ${cleanPhone}`);
+
+
         
         // Trigger SMS app
         window.location.href = `sms:${cleanPhone}?body=${encodedMessage}`;
+
+
+                // ✅ TRACK THIS ACTION
+    if (typeof tracker !== 'undefined') {
+        tracker.logInteraction(contactId, 'message', 'logic');
+    }
         
         
     }
@@ -242,12 +264,133 @@ class LogicSearch {
         console.log(`📝 Subject: ${subject}`);
         console.log(`📝 Body preview: ${body.substring(0, 100)}...`);
     }
+
+
+
+        
     
     // Trigger email client
     // This opens the default email app with pre-filled content
     // User can review/edit before sending
     window.location.href = mailtoLink;
+
+
+
+        
+        // ✅ TRACK THIS ACTION
+    if (typeof tracker !== 'undefined') {
+        tracker.logInteraction(contactId, 'email', 'logic', {
+            subject: subject,
+            hasBody: body.length > 0
+        });
+    }
+
+
+        
 }
+
+
+
+
+
+
+
+
+
+
+executeAddContact(command) {
+    const name = command.name;
+    const phone = command.phone;
+    const email = command.email;
+    const tag = command.tag || 'General';
+    
+    if (!name) {
+        console.error('❌ No name in command');
+        this.showError('Contact name required');
+        return;
+    }
+    
+    console.log(`➕ Adding contact: ${name}`);
+    
+    // Call LOGIC's contact API (not user's API)
+    fetch('api/logic/v1/contacts/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name: name,
+            phone: phone,
+            email: email,
+            tag: tag
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            console.log('✅ Contact added:', data.contact_id);
+            this.showResponse(data.message);
+            
+            // Refresh contacts page if user is on it
+            if (window.location.pathname === '/contacts') {
+                setTimeout(() => location.reload(), 1500);
+            }
+        } else {
+            console.error('❌ Add failed:', data.message);
+            this.showError(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('❌ API error:', error);
+        this.showError('Connection error');
+    });
+}
+
+executeEditContact(command) {
+    const contactId = command.contact_id;
+    const contactName = command.contact_name;
+    
+    if (!contactId) {
+        console.error('❌ Missing contact_id');
+        this.showError('Cannot identify contact');
+        return;
+    }
+    
+    console.log(`✏️ Editing: ${contactName} (${contactId})`);
+    
+    // Build update payload
+    const updates = {};
+    if (command.phone) updates.phone = command.phone;
+    if (command.email) updates.email = command.email;
+    if (command.tag) updates.tag = command.tag;
+    if (command.name) updates.name = command.name;
+    
+    // Call LOGIC's contact API (not user's API)
+    // Note: contact_id is in the URL, not in body
+    fetch(`api/logic/v1/contacts/edit/${contactId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            console.log('✅ Contact updated');
+            this.showResponse(data.message);
+            
+            // Refresh contacts page if user is on it
+            if (window.location.pathname === '/contacts') {
+                setTimeout(() => location.reload(), 1500);
+            }
+        } else {
+            console.error('❌ Edit failed:', data.message);
+            this.showError(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('❌ API error:', error);
+        this.showError('Connection error');
+    });
+}
+
 
 
 
