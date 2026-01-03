@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ note.title or 'Note' }} - MyFi</title>
+    
+    <!-- Open Graph for social sharing -->
+    <meta property="og:title" content="{{ note.title or 'Shared Note' }}">
+    <meta property="og:description" content="{{ note.content[:100] }}...">
+    <meta property="og:type" content="article">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notes/notes.css') }}">
+</head>
+<body>
+
+<div style="height: 100vh; display: flex; justify-content: center; align-items: center; padding: 24px;">
+    <div class="note-card" style="max-width: 700px;">
+        
+        {% if note.title %}
+        <div class="note-title">{{ note.title }}</div>
+        {% endif %}
+        
+        <div class="note-body">{{ note.content }}</div>
+        
+        <div class="note-footer">
+            <span class="note-author">{{ note.username }}</span>
+            <span class="note-date">{{ note.created_at[:10] }}</span>
+        </div>
+        
+        <div style="margin-top: 24px; text-align: center;">
+            <a href="/notes" style="color: var(--accent); text-decoration: none;">
+                View on MyFi →
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
