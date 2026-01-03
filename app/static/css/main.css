@@ -83,6 +83,26 @@ body, button, input, textarea, select {
         }
 
 
+/* LOGIC RESPONSE CARD */
+
+
+.logic-response-card {
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: #111;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.logic-response-text {
+    opacity: 0.9;
+}
+
+
+
+
 
 
 /* =============================================
@@ -120,6 +140,8 @@ body, button, input, textarea, select {
 
 .header a {
     text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+    
 }
 
 /* LOGO */
@@ -127,6 +149,26 @@ body, button, input, textarea, select {
     height: 2rem;   /* same as icon */
     width: auto;      /* keep aspect ratio */
     display: block;
+}
+
+/* LEFT GROUP */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.notes-icon {
+    font-size: 2rem;
+    cursor: pointer;
+    
+}
+
+.notes-icon svg {
+  width: 2rem;
+  height: 2rem;
+  display: block;
 }
 
 /* SETTINGS ICON */
@@ -142,7 +184,7 @@ body, button, input, textarea, select {
     }
 
     .header .logo img,
-    .settings-icon {
+    .settings-icon .notes-icon {
         height: 1.8rem;
         font-size: 1.8rem;
     }
