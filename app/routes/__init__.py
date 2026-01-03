@@ -29,6 +29,7 @@ def register_blueprints(app):
     #from app.routes.pages import pages_bp
     from app.routes.logic.speech import logic_speech_bp
     from app.logic.contacts.routes import logic_contacts_bp
+    from app.routes.notes.routes import notes_bp
     # from app.routes.mergeContacts import mergeContacts_bp
     # from app.routes.addCustomContact import addCustomContact_bp
     # from app.routes.notes import notes_bp
@@ -45,6 +46,7 @@ def register_blueprints(app):
     #app.register_blueprint(pages_bp)
     app.register_blueprint(logic_speech_bp)
     app.register_blueprint(logic_contacts_bp)
+    app.register_blueprint(notes_bp)
     # app.register_blueprint(addCustomContact_bp)
     # app.register_blueprint(mergeContacts_bp)
     # app.register_blueprint(notes_bp)
