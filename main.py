@@ -39,6 +39,46 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = False  # Set True in production with HTTPS
 
+
+
+
+"""
+Add these routes to your main.py or create a new blueprint
+"""
+
+from flask import send_from_directory, render_template
+
+# Serve service worker (needed if Flask doesn't auto-serve static files)
+@app.route('/service-worker.js')
+def service_worker():
+    return send_from_directory('static', 'service-worker.js', mimetype='application/javascript')
+
+# Serve manifest
+@app.route('/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
+
+# Offline fallback page
+@app.route('/offline.html')
+def offline():
+    return render_template('offline.html')
+
+# API endpoint to check PWA status
+@app.route('/api/pwa/status', methods=['GET'])
+def pwa_status():
+    return jsonify({
+        'pwa_enabled': True,
+        'version': '1.0.0',
+        'cache_name': 'myfi-v2.2.0'
+    })
+
+
+
+
+
+
+
+
 # Register blueprints
 from app.routes import register_blueprints
 register_blueprints(app)
@@ -47,7 +87,7 @@ register_blueprints(app)
 # Home route
 @app.route('/')
 def index():
-    """Main Logic chat interface - protected route"""
+    """Main L chat inte route"""
     # Check if user is authenticated
     if 'user_id' not in session:
         return redirect('/login')
@@ -74,15 +114,6 @@ def logic():
 
 
 
-# Service Worker
-@app.route('/service-worker.js')
-def service_worker():
-    return send_from_directory('app/static', 'service-worker.js', mimetype='application/javascript')
-
-# Manifest
-@app.route('/manifest.json')
-def manifest():
-    return send_from_directory('app/static', 'manifest.json', mimetype='application/json')
 
 
 
@@ -104,7 +135,7 @@ def health_check():
     """Health check for monitoring"""
     return jsonify({
         "status": "healthy",
-        "service": "myfi-logic",
+        "service": "myfi",
         "version": "1.0.0"
     }), 200
 
