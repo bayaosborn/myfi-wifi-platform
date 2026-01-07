@@ -4,7 +4,30 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+<!-- ========== PWA META TAGS - ADD THESE ========== -->
+    
+    <!-- Basic PWA -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#667eea">
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MyFi">
+    <link rel="apple-touch-icon" href="/static/images/icons/icon-192.png">
+    
+    <!-- Android PWA -->
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Windows PWA -->
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-TileImage" content="/static/images/icons/icon-192.png">
+    
+    <!-- SEO & Social -->
+    <meta name="description" content="Smart Contacts Manager. Powered by Logic AI">
+    <meta name="keywords" content="contacts, AI, assistant, productivity">
 
+    
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://myfi-v2-2.onrender.com/">
 <meta property="og:image" content="https://myfi-v2-2.onrender.com/static/images/myfi-preview.jpg">
@@ -316,7 +339,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     
 
-
+<script src="/static/js/pwa.js"></script>
+    
 
 <script src="/static/js/ui/hero.js"></script>
 
