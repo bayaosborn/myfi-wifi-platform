@@ -6,7 +6,11 @@ body {
     /*font-family: "Poppins", sans-serif;*/
     margin: 0;
     padding: 0;
-    background: #fafafa;
+    background: linear-gradient(
+        135deg,
+        #f6f9ff,
+        #e9f0ff
+      );
     color: #111;
 }
 
@@ -159,21 +163,38 @@ body, button, input, textarea, select {
   text-decoration: none;
 }
 
-.notes-icon {
-    font-size: 2rem;
-    cursor: pointer;
-    
+.header-right {
+      padding: 5px 7px;
+
+      background: rgba(0, 81, 254, 0.06); /* very light theme tint */
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+
+      border: 1px solid rgba(0, 81, 254, 0.15);
+      border-radius: 16px;
+
+      box-shadow:
+        0 8px 24px rgba(0, 81, 254, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+
+      
 }
 
-.notes-icon svg {
-  width: 2rem;
-  height: 2rem;
-  display: block;
+/* NOTES ICON */
+.header .notes img {
+    height: 2rem; /* same height as logo */
+    width: 2rem;
+    display: block;
+    cursor: pointer;
 }
+
+
 
 /* SETTINGS ICON */
-.settings-icon {
-    font-size: 2rem; /* same height as logo */
+.header .settings img {
+    height: 2rem; /* same height as logo */
+    width: 2rem;
+    display: block;
     cursor: pointer;
 }
 
@@ -411,7 +432,7 @@ body, button, input, textarea, select {
 .contacts-stats-card {
     background: #ffffff;
     color: #111;
-    padding: 26px 20px;
+    padding: 26px 16px;
     border: 2px solid #000;
     border-radius: 24px;
     margin: 25px auto;
