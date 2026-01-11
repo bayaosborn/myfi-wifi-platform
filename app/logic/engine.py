@@ -11,6 +11,8 @@ from app.backend.supabase_client import supabase
 from app.logic.helpers import get_current_date, get_current_time
 from app.logic.security.abuse import is_safe, get_abuse_rules
 from app.logic.memory.memory_manager import MemoryManager
+from app.logic.contacts.disambiguation import get_disambiguation_examples
+
 from app.logic.contacts.examples import get_contact_examples  # ← NEW
 
 
@@ -204,6 +206,8 @@ class LogicEngine:
         current_date = get_current_date()
         current_time = get_current_time()
         abuse_rules = get_abuse_rules()
+        disambiguation_examples = get_disambiguation_examples()
+    
         contact_examples = get_contact_examples()  # ← GET FULL EXAMPLES
 
         # Memory section
@@ -221,6 +225,8 @@ USER'S CONTACTS (as JSON):
 {contacts_json}
 
 {memory_section}
+
+{disambiguation_examples}
 
 YOUR JOB:
 1. Understand what user wants to do
