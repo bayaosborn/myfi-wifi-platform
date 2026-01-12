@@ -80,7 +80,7 @@ class LogicEngine:
                 messages=[
                     {"role": "system", "content": system_prompt}
                 ],
-                temperature=0.1,  # Lowered from 0.3 for more consistent behavior
+                temperature=0.3,  # Returned to 0.3 because at 0.1 Logic was slow in execution
                 max_tokens=500
             )
 
