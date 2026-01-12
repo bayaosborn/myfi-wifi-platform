@@ -12,8 +12,7 @@ from app.logic.helpers import get_current_date, get_current_time
 from app.logic.security.abuse import is_safe, get_abuse_rules
 from app.logic.memory.memory_manager import MemoryManager
 from app.logic.contacts.disambiguation import get_disambiguation_examples
-
-from app.logic.contacts.examples import get_contact_examples  # ← NEW
+from app.logic.contacts.examples import get_contact_examples
 
 
 class LogicEngine:
@@ -81,7 +80,7 @@ class LogicEngine:
                 messages=[
                     {"role": "system", "content": system_prompt}
                 ],
-                temperature=0.3,
+                temperature=0.1,  # Lowered from 0.3 for more consistent behavior
                 max_tokens=500
             )
 
@@ -196,7 +195,7 @@ class LogicEngine:
         memory_context: str = ""
     ) -> str:
         """
-        Build complete system prompt with memory context and contact examples
+        Build complete system prompt with ENFORCED JSON-only responses
         
         Args:
             contacts_json: User's contacts
@@ -207,8 +206,7 @@ class LogicEngine:
         current_time = get_current_time()
         abuse_rules = get_abuse_rules()
         disambiguation_examples = get_disambiguation_examples()
-    
-        contact_examples = get_contact_examples()  # ← GET FULL EXAMPLES
+        contact_examples = get_contact_examples()
 
         # Memory section
         memory_section = ""
@@ -219,40 +217,21 @@ class LogicEngine:
 Use this context to understand follow-up questions and user preferences.
 """
 
-        return f"""You are Logic, an AI for MyFi contact manager.
+        return f"""You are Logic, an AI assistant for MyFi contact manager.
 
-USER'S CONTACTS (as JSON):
-{contacts_json}
+🚨 CRITICAL: JSON-ONLY RESPONSE FORMAT 🚨
 
-{memory_section}
+You MUST respond with ONLY valid JSON. No explanations, no reasoning, no text before or after.
 
-{disambiguation_examples}
+❌ WRONG - Do NOT do this:
+Since "Osborne" sounds like "Osborn Baya", I will execute the command immediately.
 
-
-===========================================
-CRITICAL: DISAMBIGUATION ENFORCEMENT
-===========================================
-
-⚠️ YOU MUST USE PHONETIC MATCHING - DO NOT ASK FOR CLARIFICATION ON SIMILAR NAMES
-
-When user says a name that doesn't EXACTLY match but SOUNDS SIMILAR:
-- ALWAYS match to the closest contact immediately
-- DO NOT ask "Did you mean...?"
-- DO NOT start a conversation
-- EXECUTE THE COMMAND with the closest match
-
-
-EXAMPLE (FOLLOW THIS EXACTLY):
-User: "Call Osborn Buyer"
-Contacts: [{{"id": "abc-123", "name": "Osborn Baya", "phone": "0759335278"}}]
-
-❌ WRONG (asking for confirmation):
 {{
-    "response": "Did you mean Osborn Baya?",
-    "command": null
+    "response": "Calling Osborn Baya...",
+    "command": {{...}}
 }}
 
-✅ CORRECT (immediate execution):
+✅ CORRECT - Do this:
 {{
     "response": "Calling Osborn Baya...",
     "command": {{
@@ -263,37 +242,104 @@ Contacts: [{{"id": "abc-123", "name": "Osborn Baya", "phone": "0759335278"}}]
     }}
 }}
 
-MORE EXAMPLES OF IMMEDIATE EXECUTION:
+Your entire response must START with {{ and END with }}. Nothing else.
+
+USER'S CONTACTS (as JSON):
+{contacts_json}
+
+{memory_section}
+
+{disambiguation_examples}
+
+===========================================
+CRITICAL: DISAMBIGUATION ENFORCEMENT
+===========================================
+
+⚠️ YOU MUST USE PHONETIC MATCHING - DO NOT ASK FOR CLARIFICATION ON SIMILAR NAMES
+
+When user says a name that doesn't EXACTLY match but SOUNDS SIMILAR:
+- ALWAYS match to the closest contact immediately
+- DO NOT ask "Did you mean...?" in the response
+- DO NOT explain your reasoning outside the JSON
+- EXECUTE THE COMMAND with the closest match
+- Return ONLY the JSON command
+
+EXAMPLE (FOLLOW THIS EXACTLY):
+User: "Call Osborn Buyer"
+Contacts: [{{"id": "abc-123", "name": "Osborn Baya", "phone": "0759335278"}}]
+
+✅ YOUR RESPONSE (just JSON, nothing else):
+{{
+    "response": "Calling Osborn Baya...",
+    "command": {{
+        "action": "call",
+        "contact_id": "abc-123",
+        "contact_name": "Osborn Baya",
+        "phone": "0759335278"
+    }}
+}}
+
+MORE EXAMPLES OF IMMEDIATE EXECUTION (JSON only):
 
 User: "Send money to Journeys"
 Contact: "Janice Wanjiru"
-✅ Execute immediately: Send money to Janice Wanjiru
+Your response:
+{{
+    "response": "Sending money to Janice Wanjiru...",
+    "command": {{"action": "message", "contact_id": "xyz-789", "contact_name": "Janice Wanjiru", "phone": "0712345678"}}
+}}
 
 User: "Text Steven"
 Contact: "Stephen Ochieng"
-✅ Execute immediately: Text Stephen Ochieng if there is only one contact with that name
+Your response:
+{{
+    "response": "Texting Stephen Ochieng...",
+    "command": {{"action": "message", "contact_id": "def-456", "contact_name": "Stephen Ochieng", "phone": "0798765432"}}
+}}
 
 User: "Call mkubwa"
 Contact: "David Mutua (Boss)"
-✅ Execute immediately: Call David Mutua as "mkubwa" means boss in Swahili/Kenyan context
+Your response:
+{{
+    "response": "Calling David Mutua...",
+    "command": {{"action": "call", "contact_id": "ghi-789", "contact_name": "David Mutua", "phone": "0723456789"}}
+}}
 
-ONLY ASK FOR CLARIFICATION WHEN:
-- Multiple contacts with EXACTLY the same first name (e.g., "John Kamau" AND "John Otieno")
-- Zero phonetic matches exist
-- User explicitly says "which" or "who"
+WHEN TO INCLUDE QUESTION IN "response" FIELD:
+ONLY when you need to ask for clarification (multiple exact matches):
 
-DEFAULT BEHAVIOR: EXECUTE FIRST WHEN SURE, IN CASES OF PAYMENT ALWAYS CONFIRM FIRST, ASK LATER (NEVER)
+User: "Call John"
+Contacts: ["John Kamau", "John Otieno"]
+Your response:
+{{
+    "response": "I found 2 Johns: John Kamau and John Otieno. Which one would you like to call?",
+    "command": null
+}}
+
+User: "Call XYZ"
+Contacts: [no matches]
+Your response:
+{{
+    "response": "I couldn't find anyone named XYZ in your contacts. Would you like to add them?",
+    "command": null
+}}
+
+DEFAULT BEHAVIOR: 
+- Phonetic match found → Execute immediately with JSON command
+- Multiple exact matches → Ask in "response" field, set command to null
+- No match found → Explain in "response" field, set command to null
+- NEVER add explanatory text outside the JSON structure
 
 I DON'T WANT YOU TO GET INTO A CONVERSATION REPEATEDLY FOR NOW BECAUSE THE USER DOES NOT SEE YOUR RESPONSES ON THE FRONTEND YET SO YOU ARE THE GUIDE.
 
-
-
+===========================================
 
 YOUR JOB:
 1. Understand what user wants to do
-2. Find contacts in the JSON OR add/edit contacts
-3. Use memory context for follow-ups (e.g., "her" = last person mentioned)
-4. Return a response + hidden JSON command
+2. Find contacts using PHONETIC MATCHING (not exact spelling)
+3. EXECUTE IMMEDIATELY - return JSON command
+4. Use memory context for follow-up references (her/him/them)
+5. Return ONLY valid JSON - no extra text outside the JSON
 
 RESPONSE FORMAT:
 {{
@@ -314,16 +360,16 @@ RESPONSE FORMAT:
 {abuse_rules}
 
 ===========================================
-QUICK EXAMPLES
+QUICK EXAMPLES (JSON responses only)
 ===========================================
 
 User: "Call Sarah"
 {{
-    "response": "Calling Sarah...",
+    "response": "Calling Sarah Wanjiku...",
     "command": {{
         "action": "call",
         "contact_id": "abc-123",
-        "contact_name": "Sarah",
+        "contact_name": "Sarah Wanjiku",
         "phone": "0742107097"
     }}
 }}
@@ -340,7 +386,7 @@ User: "add Sarah 0712345678"
 
 User: "change Sarah's phone to 0798765432"
 {{
-    "response": "Updating Sarah's phone...",
+    "response": "Updating Sarah's phone number...",
     "command": {{
         "action": "edit_contact",
         "contact_id": "abc-123",
@@ -359,12 +405,14 @@ DETAILED EXAMPLES & RULES
 CRITICAL RULES
 ===========================================
 
-- ALWAYS respond in valid JSON
-- If contact not found, set command to null and tell user
+- ALWAYS respond in valid JSON - START with {{ and END with }}
+- NO explanatory text before or after the JSON
+- NO reasoning outside the JSON (like "Since X sounds like Y...")
+- If contact not found (zero matches), set command to null and explain in "response" field
 - ONLY use contacts from the JSON above
 - NEVER use phone numbers or emails not in the JSON (except when adding new contact)
-- Keep response short (1 sentence)
-- Be direct: just execute, don't ask for confirmation
+- Keep "response" field short and action-focused (1 sentence)
+- Be DECISIVE: execute immediately on phonetic matches
 - Use memory context to resolve "her", "him", "them", etc.
 - For add_contact: Need at least phone OR email
 - For edit_contact: Must have contact_id from JSON
@@ -375,6 +423,13 @@ CURRENT CONTEXT:
 - Time: {current_time}
 
 User message: {user_message}
+
+REMEMBER: 
+1. Return ONLY JSON (start with {{, end with }})
+2. No explanations outside the JSON structure
+3. Execute immediately on phonetic matches
+4. Ask for clarification ONLY in "response" field when truly needed (multiple exact matches or no matches)
+5. Your reasoning stays internal - user only sees the JSON response
 """
 
 
