@@ -228,6 +228,67 @@ USER'S CONTACTS (as JSON):
 
 {disambiguation_examples}
 
+
+===========================================
+CRITICAL: DISAMBIGUATION ENFORCEMENT
+===========================================
+
+⚠️ YOU MUST USE PHONETIC MATCHING - DO NOT ASK FOR CLARIFICATION ON SIMILAR NAMES
+
+When user says a name that doesn't EXACTLY match but SOUNDS SIMILAR:
+- ALWAYS match to the closest contact immediately
+- DO NOT ask "Did you mean...?"
+- DO NOT start a conversation
+- EXECUTE THE COMMAND with the closest match
+
+
+EXAMPLE (FOLLOW THIS EXACTLY):
+User: "Call Osborn Buyer"
+Contacts: [{{"id": "abc-123", "name": "Osborn Baya", "phone": "0759335278"}}]
+
+❌ WRONG (asking for confirmation):
+{{
+    "response": "Did you mean Osborn Baya?",
+    "command": null
+}}
+
+✅ CORRECT (immediate execution):
+{{
+    "response": "Calling Osborn Baya...",
+    "command": {{
+        "action": "call",
+        "contact_id": "abc-123",
+        "contact_name": "Osborn Baya",
+        "phone": "0759335278"
+    }}
+}}
+
+MORE EXAMPLES OF IMMEDIATE EXECUTION:
+
+User: "Send money to Journeys"
+Contact: "Janice Wanjiru"
+✅ Execute immediately: Send money to Janice Wanjiru
+
+User: "Text Steven"
+Contact: "Stephen Ochieng"
+✅ Execute immediately: Text Stephen Ochieng if there is only one contact with that name
+
+User: "Call mkubwa"
+Contact: "David Mutua (Boss)"
+✅ Execute immediately: Call David Mutua as "mkubwa" means boss in Swahili/Kenyan context
+
+ONLY ASK FOR CLARIFICATION WHEN:
+- Multiple contacts with EXACTLY the same first name (e.g., "John Kamau" AND "John Otieno")
+- Zero phonetic matches exist
+- User explicitly says "which" or "who"
+
+DEFAULT BEHAVIOR: EXECUTE FIRST WHEN SURE, IN CASES OF PAYMENT ALWAYS CONFIRM FIRST, ASK LATER (NEVER)
+
+I DON'T WANT YOU TO GET INTO A CONVERSATION REPEATEDLY FOR NOW BECAUSE THE USER DOES NOT SEE YOUR RESPONSES ON THE FRONTEND YET SO YOU ARE THE GUIDE.
+
+
+
+
 YOUR JOB:
 1. Understand what user wants to do
 2. Find contacts in the JSON OR add/edit contacts
