@@ -16,3 +16,14 @@ requests==2.31.0
 # IMPORTANT
 httpx>=0.26,<0.28
 
+
+#Myfi Calls
+flask-socketio==5.6.0
+eventlet==0.40.4
+
+
+
+
+
+
+

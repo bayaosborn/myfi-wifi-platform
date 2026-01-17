@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFi - Calls</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/call/call.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>📞 MyFi Calls</h1>
+            <div class="user-status">
+                <span class="status-dot"></span>
+                <span>Online</span>
+            </div>
+        </header>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-bar">
+                <input 
+                    type="tel" 
+                    id="searchInput" 
+                    placeholder="Enter phone number (e.g., 0712345678)"
+                    maxlength="10"
+                />
+                <button id="searchBtn" class="btn-primary">Search</button>
+            </div>
+        </section>
+
+        <!-- Search Results -->
+        <div id="searchResults" class="search-results" style="display: none;">
+            <div class="user-card">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <h3 id="foundPhone"></h3>
+                        <p id="foundName"></p>
+                        <span id="onlineStatus" class="status-badge"></span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="callBtn" class="btn-call">📞 Call</button>
+                    <button id="saveBtn" class="btn-secondary">💾 Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="contacts">Contacts</button>
+            <button class="tab-btn" data-tab="history">History</button>
+        </div>
+
+        <!-- Contacts Tab -->
+        <section id="contactsTab" class="tab-content active">
+            <div class="section-header">
+                <h2>My Contacts</h2>
+                <span id="contactCount" class="count-badge">0</span>
+            </div>
+            <div id="contactsList" class="list">
+                <div class="empty-state">
+                    <p>No contacts yet</p>
+                    <small>Search for users to add them</small>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Tab -->
+        <section id="historyTab" class="tab-content">
+            <div class="section-header">
+                <h2>Call History</h2>
+                <span id="historyCount" class="count-badge">0</span>
+            </div>
+            <div id="historyList" class="list">
+                <div class="empty-state">
+                    <p>No call history</p>
+                    <small>Your calls will appear here</small>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call Screen (Hidden by default) -->
+        <div id="callScreen" class="call-screen">
+            <div class="call-ui">
+                <div class="call-avatar">📞</div>
+                <h2 id="callUserName">Unknown</h2>
+                <p id="callStatus" class="call-status">Connecting...</p>
+                <p id="callTimer" class="call-timer">00:00</p>
+                
+                <div class="call-controls">
+                    <button id="muteBtn" class="control-btn">
+                        <span>🎤</span>
+                        <small>Mute</small>
+                    </button>
+                    <button id="hangUpBtn" class="control-btn hang-up">
+                        <span>📴</span>
+                        <small>End</small>
+                    </button>
+                    <button id="speakerBtn" class="control-btn">
+                        <span>🔊</span>
+                        <small>Speaker</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incoming Call Modal -->
+        <div id="incomingCallModal" class="modal">
+            <div class="modal-content incoming-call">
+                <div class="call-avatar pulse">📞</div>
+                <h2>Incoming Call</h2>
+                <p id="incomingCallerName">Unknown Caller</p>
+                <p id="incomingCallerPhone" class="caller-phone"></p>
+                <div class="incoming-actions">
+                    <button id="rejectCallBtn" class="btn-reject">
+                        <span>✕</span>
+                        <small>Reject</small>
+                    </button>
+                    <button id="acceptCallBtn" class="btn-accept">
+                        <span>✓</span>
+                        <small>Accept</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Contact Modal -->
+        <div id="saveContactModal" class="modal">
+            <div class="modal-content">
+                <h2>Save Contact</h2>
+                <p>Phone: <strong id="savePhone"></strong></p>
+                <input 
+                    type="text" 
+                    id="contactNameInput" 
+                    placeholder="Enter name"
+                    maxlength="50"
+                />
+                <select id="contactTagInput">
+                    <option value="General">General</option>
+                    <option value="Family">Family</option>
+                    <option value="Friends">Friends</option>
+                    <option value="Work">Work</option>
+                    <option value="Business">Business</option>
+                </select>
+                <div class="modal-actions">
+                    <button id="cancelSaveBtn" class="btn-secondary">Cancel</button>
+                    <button id="confirmSaveBtn" class="btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- WebRTC Script -->
+    <script src="{{ url_for('static', filename='js/call/webrtc.js') }}"></script>
+    
+    <!-- Contacts Management -->
+    <script src="{{ url_for('static', filename='js/call/contacts.js') }}"></script>
+    
+    <!-- Main UI Script -->
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.dataset.tab;
+                
+                // Update active tab button
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Update active content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tab + 'Tab').classList.add('active');
+            });
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📱 Call UI initialized');
+            
+            // Load contacts and history if functions exist
+            if (typeof loadContacts === 'function') loadContacts();
+            if (typeof loadCallHistory === 'function') loadCallHistory();
+        });
+    </script>
+</body>
+</html>
