@@ -28,9 +28,10 @@ def register_blueprints(app):
     from app.routes.interactions import interactions_bp
     #from app.routes.pages import pages_bp
     from app.routes.logic.speech import logic_speech_bp
-    from app.logic.contacts.routes import logic_contacts_bp
+    #from app.logic.contacts.routes import logic_contacts_bp
     from app.routes.notes.routes import notes_bp
     from app.routes.call.call_routes import call_bp
+    from app.routes.directory.routes import directory_bp
     
 
     # Register blueprints
@@ -44,10 +45,10 @@ def register_blueprints(app):
     app.register_blueprint(interactions_bp)
     #app.register_blueprint(pages_bp)
     app.register_blueprint(logic_speech_bp)
-    app.register_blueprint(logic_contacts_bp)
+    #app.register_blueprint(logic_contacts_bp)
     app.register_blueprint(notes_bp)
     app.register_blueprint(call_bp)
-    
+    app.register_blueprint(directory_bp)
 
     # Debug prints (optional)
     # print("✅ Registered blueprints:")
