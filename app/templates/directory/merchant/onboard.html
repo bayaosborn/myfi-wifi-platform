@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join MyFi Business Directory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0051fe;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: linear-gradient(
+                135deg,
+                #f6f9ff,
+                #e9f0ff
+              );
+            max-width: 500px;
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #3b82f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🏪 MyFi Business Directory</h1>
+            <p class="subtitle">Join thousands of local businesses</p>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <strong>Why join?</strong>
+            <ul>
+                <li>Get discovered by customers via Logic AI</li>
+                <li>Manage your availability in real-time</li>
+                <li>Receive orders directly</li>
+                <li>100% free to join</li>
+            </ul>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error" class="error"></div>
+
+        <!-- Success Message -->
+        <div id="success" class="success"></div>
+
+        <!-- Onboarding Form -->
+        <form id="onboardForm">
+            <div class="form-group">
+                <label for="businessName">Business Name *</label>
+                <input 
+                    type="text" 
+                    id="businessName" 
+                    name="businessName" 
+                    placeholder="e.g., Monique Botique"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="ownerName">Your Name *</label>
+                <input 
+                    type="text" 
+                    id="ownerName" 
+                    name="ownerName" 
+                    placeholder="e.g., Sherryl"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="ownerPhone">Phone Number *</label>
+                <input 
+                    type="tel" 
+                    id="ownerPhone" 
+                    name="ownerPhone" 
+                    placeholder="254712345678"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="category">Business Category *</label>
+                <select id="category" name="category" required>
+                    <option value="">Select category...</option>
+                    <option value="beauty">Beauty & Personal Care</option>
+                    <option value="soap">Soap & Cosmetics</option>
+                    <option value="food">Food & Beverages</option>
+                    <option value="gas">Gas Suppliers</option>
+                    <option value="hardware">Hardware & Tools</option>
+                    <option value="fashion">Fashion & Clothing</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="services">Professional Services</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Business Description</label>
+                <textarea 
+                    id="description" 
+                    name="description" 
+                    placeholder="Tell customers what makes your business special..."
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="contactEmail">Email (Optional)</label>
+                <input 
+                    type="email" 
+                    id="contactEmail" 
+                    name="contactEmail" 
+                    placeholder="your@email.com"
+                >
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                Join MyFi Directory
+            </button>
+        </form>
+
+        <p style="text-align: center; margin-top: 20px; font-size: 12px; color: #999;">
+            Already have an account? <a href="/directory/merchant/login" style="color: #667eea;">Login</a>
+        </p>
+    </div>
+
+    <script>
+        const form = document.getElementById('onboardForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorDiv = document.getElementById('error');
+        const successDiv = document.getElementById('success');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Hide previous messages
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating your account...';
+            
+            try {
+                const formData = {
+                    business_name: document.getElementById('businessName').value,
+                    owner_name: document.getElementById('ownerName').value,
+                    owner_phone: document.getElementById('ownerPhone').value,
+                    category: document.getElementById('category').value,
+                    description: document.getElementById('description').value,
+                    contact_email: document.getElementById('contactEmail').value
+                };
+                
+                const response = await fetch('/directory/merchant/onboard', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    successDiv.textContent = '✅ ' + data.message + ' Redirecting to dashboard...';
+                    successDiv.style.display = 'block';
+                    
+                    // Redirect to dashboard after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/directory/merchant/dashboard';
+                    }, 2000);
+                } else {
+                    errorDiv.textContent = '❌ ' + (data.error || 'Onboarding failed. Please try again.');
+                    errorDiv.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Join MyFi Directory';
+                }
+            } catch (error) {
+                console.error('Onboarding error:', error);
+                errorDiv.textContent = '❌ Network error. Please check your connection and try again.';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Join MyFi Directory';
+            }
+        });
+    </script>
+</body>
+</html>
