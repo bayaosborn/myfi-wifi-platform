@@ -1,10 +1,11 @@
 """
 Supabase Client - REST API Implementation
-Updated for Phone Authentication (NO Supabase Auth)
+Updated for Phone Authentication (NO Supabase Auth) + Storage Support
 """
 
 import os
 import requests
+from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -13,20 +14,21 @@ load_dotenv()
 # Supabase configuration
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY')
+SUPABASE_SECRET_KEY = os.getenv('SUPABASE_SECRET_KEY')
 
 # Validate configuration
-if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
     raise ValueError(
         "Missing Supabase configuration. "
-        "Please set SUPABASE_URL and SUPABASE_ANON_KEY in .env file"
+        "Please set SUPABASE_URL and SUPABASE_SECRET_KEY in .env file"
     )
 
 class SupabaseClient:
-    """Simple Supabase client using REST API - Phone Auth Compatible"""
+    """Simple Supabase client using REST API - Phone Auth Compatible + Storage"""
     
     def __init__(self):
         self.url = SUPABASE_URL
-        self.key = SUPABASE_ANON_KEY
+        self.key = SUPABASE_SECRET_KEY
         self.rest_url = f"{self.url}/rest/v1"
         
     def _get_headers(self):
@@ -189,6 +191,183 @@ class SupabaseClient:
         except Exception as e:
             print(f"Count error: {str(e)}")
             return 0
+    
+    # ==================== STORAGE METHODS ====================
+    
+    def upload_file(
+        self,
+        bucket: str,
+        path: str,
+        content: str,
+        content_type: str = 'text/plain'
+    ) -> bool:
+        """
+        Upload file to Supabase Storage
+        
+        Args:
+            bucket: Bucket name (e.g., 'episodic-memory')
+            path: File path in bucket (e.g., 'users/uuid/2026/01/file.md')
+            content: File content (string)
+            content_type: MIME type (default: text/plain)
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Encode content as bytes
+            content_bytes = content.encode('utf-8')
+            
+            # Build upload URL
+            url = f"{self.url}/storage/v1/object/{bucket}/{path}"
+            
+            # Upload with upsert (overwrite if exists)
+            headers = {
+                'apikey': self.key,
+                'Authorization': f'Bearer {self.key}',
+                'x-upsert': 'true'  # Allow overwriting
+            }
+            
+            response = requests.post(
+                url,
+                headers=headers,
+                files={'file': (path.split('/')[-1], content_bytes, content_type)}
+            )
+            
+            if response.status_code in [200, 201]:
+                print(f"✅ File uploaded: {path}")
+                return True
+            else:
+                print(f"❌ Upload failed: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Upload exception: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def download_file(
+        self,
+        bucket: str,
+        path: str
+    ) -> Optional[str]:
+        """
+        Download file from Supabase Storage
+        
+        Args:
+            bucket: Bucket name
+            path: File path in bucket
+        
+        Returns:
+            File content as string, or None if failed
+        """
+        try:
+            # Build download URL
+            url = f"{self.url}/storage/v1/object/{bucket}/{path}"
+            
+            headers = {
+                'apikey': self.key,
+                'Authorization': f'Bearer {self.key}'
+            }
+            
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                return response.text
+            else:
+                print(f"❌ Download failed: {response.status_code} - {response.text}")
+                return None
+                
+        except Exception as e:
+            print(f"❌ Download exception: {e}")
+            return None
+    
+    def list_files(
+        self,
+        bucket: str,
+        path: str = '',
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """
+        List files in a bucket path
+        
+        Args:
+            bucket: Bucket name
+            path: Folder path (e.g., 'users/abc-123/2026/01')
+            limit: Max files to return
+        
+        Returns:
+            List of file objects with 'name', 'id', 'created_at', etc.
+        """
+        try:
+            # Build list URL
+            url = f"{self.url}/storage/v1/object/list/{bucket}"
+            
+            headers = {
+                'apikey': self.key,
+                'Authorization': f'Bearer {self.key}',
+                'Content-Type': 'application/json'
+            }
+            
+            # Query params
+            params = {
+                'prefix': path,
+                'limit': limit,
+                'offset': 0,
+                'sortBy': {'column': 'created_at', 'order': 'desc'}
+            }
+            
+            response = requests.post(
+                url,
+                headers=headers,
+                json=params
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                print(f"❌ List failed: {response.status_code} - {response.text}")
+                return []
+                
+        except Exception as e:
+            print(f"❌ List exception: {e}")
+            return []
+    
+    def delete_file(
+        self,
+        bucket: str,
+        path: str
+    ) -> bool:
+        """
+        Delete file from Supabase Storage
+        
+        Args:
+            bucket: Bucket name
+            path: File path in bucket
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            url = f"{self.url}/storage/v1/object/{bucket}/{path}"
+            
+            headers = {
+                'apikey': self.key,
+                'Authorization': f'Bearer {self.key}'
+            }
+            
+            response = requests.delete(url, headers=headers)
+            
+            if response.status_code == 200:
+                print(f"✅ File deleted: {path}")
+                return True
+            else:
+                print(f"❌ Delete failed: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Delete exception: {e}")
+            return False
 
 
 # Global client instance

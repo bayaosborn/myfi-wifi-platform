@@ -1,5 +1,5 @@
 """
-Logic Engine - With Memory System
+Logic Engine - With Memory System + Episodic Memory
 Handles call, message, email, add_contact, edit_contact commands
 """
 
@@ -11,6 +11,7 @@ from app.backend.supabase_client import supabase
 from app.logic.helpers import get_current_date, get_current_time
 from app.logic.security.abuse import is_safe, get_abuse_rules
 from app.logic.memory.memory_manager import MemoryManager
+from app.logic.memory.episodes import EpisodicWriter, EpisodicReader  # 🆕 Add both
 from app.logic.contacts.disambiguation import get_disambiguation_examples
 from app.logic.contacts.examples import get_contact_examples
 
@@ -30,7 +31,13 @@ class LogicEngine:
         # Initialize memory
         self.memory = MemoryManager(user_id)
         
-        print(f"✅ Logic engine initialized for user {user_id[:8]}... with memory")
+        # 🆕 Initialize episodic writer
+        self.episodic_writer = EpisodicWriter(user_id)
+        
+        # 🆕 Initialize episodic reader
+        self.episodic_reader = EpisodicReader(user_id)
+        
+        print(f"✅ Logic engine initialized for user {user_id[:8]}... with memory + episodes")
 
     def chat(self, message: str) -> dict:
         """
@@ -59,6 +66,20 @@ class LogicEngine:
             # 🧠 GET MEMORY CONTEXT
             # ========================================
             memory_context = self.memory.get_context(message)
+            
+            # 🆕 CHECK IF THIS IS A RECALL QUERY
+            # ========================================
+            if self._is_recall_query(message):
+                episodic_context = self.episodic_reader.get_context_for_recall(message)
+                
+                # Append to memory context
+                if episodic_context and "No matching episodes" not in episodic_context:
+                    if memory_context:
+                        memory_context += "\n\n" + episodic_context
+                    else:
+                        memory_context = episodic_context
+                    
+                    print(f"✅ Added episodic context for recall query")
             
             # ========================================
             # ✅ PROCEED NORMALLY
@@ -111,6 +132,9 @@ class LogicEngine:
                 
                 if command and command.get('action') in valid_actions:
                     result['hidden_commands'].append(command)
+                    
+                    # 🆕 Write episodic memory after successful command
+                    self._write_episode(command)
                 
                 # ========================================
                 # 💾 SAVE TO MEMORY
@@ -187,6 +211,127 @@ class LogicEngine:
         except Exception as e:
             print(f"Error getting contacts: {e}")
             return "[]"
+    
+    # 🆕 NEW METHOD: Write episodic memory
+    def _write_episode(self, command: dict):
+        """
+        Write episode to episodic memory after command execution
+        
+        Args:
+            command: Parsed command from Logic
+        """
+        try:
+            action_type = command.get('action')
+            
+            # Map action types to intents
+            intent_map = {
+                'call': 'call',
+                'message': 'sms',
+                'email': 'email',
+                'add_contact': 'add-contact',
+                'edit_contact': 'edit-contact'
+            }
+            
+            intent = intent_map.get(action_type, action_type)
+            
+            # Prepare episode data
+            target = command.get('contact_name')
+            target_phone = command.get('phone')
+            target_email = command.get('email')
+            
+            # Determine action and outcome
+            action_desc = f"{intent.replace('-', '_')}_executed"
+            outcome = "command_sent"  # Assume success (technical debt for now)
+            
+            # Collect metadata based on action type
+            metadata = {}
+            
+            if action_type == 'call':
+                metadata['call_type'] = 'outbound'
+                metadata['contact_id'] = command.get('contact_id')
+            
+            elif action_type == 'message':
+                metadata['message_preview'] = command.get('body', '')[:50] if command.get('body') else 'SMS sent'
+                metadata['contact_id'] = command.get('contact_id')
+            
+            elif action_type == 'email':
+                metadata['subject'] = command.get('subject', 'No subject')
+                metadata['body_preview'] = command.get('body', '')[:50] if command.get('body') else ''
+                metadata['contact_id'] = command.get('contact_id')
+            
+            elif action_type == 'add_contact':
+                metadata['new_contact_name'] = command.get('name')
+                metadata['tag'] = command.get('tag', 'General')
+            
+            elif action_type == 'edit_contact':
+                metadata['contact_id'] = command.get('contact_id')
+                metadata['updated_fields'] = []
+                if 'phone' in command:
+                    metadata['updated_fields'].append('phone')
+                if 'email' in command:
+                    metadata['updated_fields'].append('email')
+                if 'name' in command:
+                    metadata['updated_fields'].append('name')
+                metadata['updated_fields'] = ', '.join(metadata['updated_fields']) if metadata['updated_fields'] else 'unknown'
+            
+            # Write episode
+            self.episodic_writer.write_episode(
+                intent=intent,
+                action=action_desc,
+                outcome=outcome,
+                target=target,
+                target_phone=target_phone,
+                target_email=target_email,
+                metadata=metadata
+            )
+            
+            print(f"✅ Episode written for {intent}: {target or 'N/A'}")
+            
+        except Exception as e:
+            # Don't fail the whole request if episode writing fails
+            print(f"⚠️ Failed to write episode: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _is_recall_query(self, message: str) -> bool:
+        """
+        Detect if user is asking about past episodes
+        
+        Args:
+            message: User's message
+        
+        Returns:
+            True if it's a recall query
+        """
+        recall_keywords = [
+            'who did i call',
+            'who did i email',
+            'who did i text',
+            'who did i message',
+            'did i call',
+            'did i email',
+            'did i text',
+            'did i message',
+            'when did i call',
+            'when did i email',
+            'what did i',
+            'last time i called',
+            'last time i emailed',
+            'yesterday',
+            'last week',
+            'this morning',
+            'this afternoon',
+            'this evening',
+            'today',
+            'recent calls',
+            'recent emails',
+            'call history',
+            'email history'
+        ]
+        
+        message_lower = message.lower()
+        
+        return any(keyword in message_lower for keyword in recall_keywords)
 
     def _build_system_prompt(
         self, 
