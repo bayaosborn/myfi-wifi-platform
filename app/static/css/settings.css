@@ -81,7 +81,7 @@ body, button, input, textarea, select {
 /* ---------------------------------------------
    MYFI HISTORY BUTTON (Blue Action Button)
 ---------------------------------------------- */
-.history-btn {
+.merchantOnboardDiv {
     display: block;
     margin: 20px auto 0 auto;
     padding: 14px 20px;
@@ -108,17 +108,17 @@ body, button, input, textarea, select {
     gap: 8px;
 }
 
-.history-btn:hover {
+.merchantOnboardDiv:hover {
     background: #0041d6;
     box-shadow: 0 6px 14px rgba(0, 81, 255, 0.35);
     transform: translateY(-2px);
 }
 
-.history-btn:active {
+.merchantOnboardDiv:active {
     transform: scale(0.98);
 }
 
-.history-btn:disabled {
+.merchantOnboardDiv:disabled {
     background: #8fb4ff;
     cursor: not-allowed;
     transform: none;
