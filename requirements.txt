@@ -22,7 +22,7 @@ flask-socketio==5.6.0
 eventlet==0.40.4
 
 #Episodic Memory
-pytz==2024.1
+pytz==2025.2
 
 
 
