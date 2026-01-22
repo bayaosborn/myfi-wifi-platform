@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - {{ merchant.business_name }}</title>
+    <link rel="stylesheet" href="/static/css/directory/merchant/settings.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <a href="/directory/merchant/dashboard" class="nav-tab">Dashboard</a>
+            <a href="/directory/merchant/products" class="nav-tab">Products</a>
+            <a href="/directory/merchant/orders" class="nav-tab">Orders</a>
+            <a href="/directory/merchant/settings" class="nav-tab active">Settings</a>
+        </nav>
+
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>Settings</h1>
+                <p class="subtitle">Manage your business information</p>
+            </div>
+        </div>
+
+        <!-- Business Details Section -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2>Business Details</h2>
+            </div>
+            
+            <div class="form-group">
+                <label>Business Name</label>
+                <input type="text" id="business_name" value="{{ merchant.business_name }}" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label>Owner Name</label>
+                <input type="text" id="owner_name" value="{{ merchant.owner_name }}" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label>Business Description</label>
+                <textarea id="description" class="form-textarea" rows="4" placeholder="Tell customers about your business...">{{ merchant.description or '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Business Tags</label>
+                <input type="text" id="tags" value="{{ merchant.tags|join(', ') if merchant.tags else '' }}" class="form-input" placeholder="e.g. soap, vacuum, cleaning, jik, handmade">
+                <span class="form-help">Separate tags with commas. This helps Logic understand your business better.</span>
+            </div>
+
+            <button class="btn btn-save" onclick="saveBusinessDetails()">Save Business Details</button>
+        </div>
+
+        <!-- Contact Information Section -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2>Contact Information</h2>
+            </div>
+            
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" id="phone" value="{{ merchant.phone }}" class="form-input" placeholder="0712345678">
+            </div>
+
+            <div class="form-group">
+                <label>Email (Optional)</label>
+                <input type="email" id="email" value="{{ merchant.email or '' }}" class="form-input" placeholder="business@example.com">
+            </div>
+
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="location" value="{{ merchant.location }}" class="form-input" placeholder="Westlands, Nairobi">
+            </div>
+
+            <button class="btn btn-save" onclick="saveContactInfo()">Save Contact Info</button>
+        </div>
+
+        <!-- Operating Hours Section -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2>Operating Hours</h2>
+            </div>
+            
+            <div class="hours-grid">
+                <div class="form-group">
+                    <label>Opening Time</label>
+                    <select id="opening_time" class="form-select">
+                        <option value="">Select time</option>
+                        <option value="06:00">6:00 AM</option>
+                        <option value="07:00">7:00 AM</option>
+                        <option value="08:00">8:00 AM</option>
+                        <option value="09:00">9:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Closing Time</label>
+                    <select id="closing_time" class="form-select">
+                        <option value="">Select time</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="15:00">3:00 PM</option>
+                        <option value="16:00">4:00 PM</option>
+                        <option value="17:00">5:00 PM</option>
+                        <option value="18:00">6:00 PM</option>
+                        <option value="19:00">7:00 PM</option>
+                        <option value="20:00">8:00 PM</option>
+                        <option value="21:00">9:00 PM</option>
+                        <option value="22:00">10:00 PM</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-save" onclick="saveOperatingHours()">Save Operating Hours</button>
+        </div>
+
+        <!-- Payment Methods Section -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2>Payment Methods</h2>
+            </div>
+            
+            <div class="form-group">
+                <label>M-Pesa Till Number</label>
+                <input type="text" id="mpesa_till" value="{{ merchant.mpesa_till or '' }}" class="form-input" placeholder="123456">
+            </div>
+
+            <div class="form-group">
+                <label>M-Pesa Paybill Number</label>
+                <input type="text" id="mpesa_paybill" value="{{ merchant.mpesa_paybill or '' }}" class="form-input" placeholder="654321">
+            </div>
+
+            <div class="form-group">
+                <label>Account Number (for Paybill)</label>
+                <input type="text" id="mpesa_account" value="{{ merchant.mpesa_account or '' }}" class="form-input" placeholder="Your account number">
+            </div>
+
+            <button class="btn btn-save" onclick="savePaymentMethods()">Save Payment Methods</button>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification"></div>
+
+    <script src="/static/js/directory/merchant/settings.js"></script>
+</body>
+</html>
