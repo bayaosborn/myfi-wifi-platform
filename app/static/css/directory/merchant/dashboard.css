@@ -1,0 +1,374 @@
+/* Dashboard Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #f6f9ff, #e9f0ff);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Navigation Tabs */
+.nav-tabs {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-tab {
+    padding: 10px 20px;
+    text-decoration: none;
+    color: #666;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.nav-tab:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.nav-tab.active {
+    background: #0051fe;
+    color: white;
+}
+
+/* Header */
+.header {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+    color: #1a1a1a;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 14px;
+}
+
+.merchant-id {
+    font-size: 12px;
+    color: #999;
+    background: #f5f5f5;
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+
+/* Status Section */
+.status-section {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+h2 {
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: #1a1a1a;
+}
+
+.status-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.status-card {
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #e5e7eb;
+}
+
+.status-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 12px;
+}
+
+.status-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.btn-open {
+    background: #10b981;
+    color: white;
+}
+
+.btn-closed {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-in-stock {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-out-stock {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn.active {
+    opacity: 1;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn:not(.active) {
+    opacity: 0.5;
+}
+
+.btn:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+/* Current Status Display */
+.current-status {
+    background: #f0fdf4;
+    border: 2px solid #10b981;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.current-status.closed {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+.status-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+.status-help {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0051fe;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* Orders Section */
+.orders-section {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.view-all {
+    color: #0051fe;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.view-all:hover {
+    text-decoration: underline;
+}
+
+.order-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.order-item {
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.order-id {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.order-status {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.order-status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.order-status.confirmed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.order-status.completed {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.order-details {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.empty-text {
+    font-size: 14px;
+    color: #9ca3af;
+}
+
+/* Notification Toast */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+}
+
+.notification.error {
+    background: #ef4444;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav-tabs {
+        overflow-x: auto;
+    }
+    
+    .status-controls {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+}
