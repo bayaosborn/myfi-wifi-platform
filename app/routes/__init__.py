@@ -31,7 +31,13 @@ def register_blueprints(app):
     #from app.logic.contacts.routes import logic_contacts_bp
     from app.routes.notes.routes import notes_bp
     from app.routes.call.call_routes import call_bp
-    from app.routes.directory.routes import directory_bp
+
+
+    #Import Directory Blueprints 
+    from app.routes.directory.directory import directory_bp
+    from app.routes.directory.merchant.dashboard import merchant_dashboard_bp
+    from app.routes.directory.merchant.settings import merchant_settings_bp
+    from app.routes.directory.merchant.products import merchant_products_bp
     
 
     # Register blueprints
@@ -48,7 +54,14 @@ def register_blueprints(app):
     #app.register_blueprint(logic_contacts_bp)
     app.register_blueprint(notes_bp)
     app.register_blueprint(call_bp)
+    
+
+    #Register Directory Blueprints
+    
     app.register_blueprint(directory_bp)
+    app.register_blueprint(merchant_dashboard_bp)
+    app.register_blueprint(merchant_settings_bp)
+    app.register_blueprint(merchant_products_bp)
 
     # Debug prints (optional)
     # print("✅ Registered blueprints:")
