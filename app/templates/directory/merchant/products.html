@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products & Services - {{ merchant.business_name }}</title>
+    <link rel="stylesheet" href="/static/css/directory/merchant/products.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <a href="/directory/merchant/dashboard" class="nav-tab">Dashboard</a>
+            <a href="/directory/merchant/products" class="nav-tab active">Products</a>
+            <a href="/directory/merchant/orders" class="nav-tab">Orders</a>
+            <a href="/directory/merchant/settings" class="nav-tab">Settings</a>
+        </nav>
+
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>Products & Services</h1>
+                <p class="subtitle">Manage what you offer</p>
+            </div>
+            <button class="btn btn-add" onclick="showAddModal()">+ Add New</button>
+        </div>
+
+        <!-- Products List -->
+        <div class="products-section">
+            <div class="products-grid">
+                {% if products %}
+                    {% for product in products %}
+                    <div class="product-card" data-id="{{ product.id }}">
+                        <div class="product-badge {{ product.type|lower }}">
+                            {{ product.type }}
+                        </div>
+                        
+                        <div class="product-image">
+                            {% if product.image_url %}
+                                <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                            {% else %}
+                                <div class="image-placeholder">
+                                    {{ '🧼' if product.type == 'PRODUCT' else '🧹' }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="product-info">
+                            <h3 class="product-name">{{ product.name }}</h3>
+                            
+                            {% if product.description %}
+                            <p class="product-description">{{ product.description }}</p>
+                            {% endif %}
+                            
+                            <div class="product-details">
+                                <span class="product-price">KES {{ product.price }}</span>
+                                <span class="product-status {{ 'available' if product.is_available else 'unavailable' }}">
+                                    {{ '✓ Available' if product.is_available else '✗ Unavailable' }}
+                                </span>
+                            </div>
+                            
+                            {% if product.type == 'SERVICE' and product.service_location %}
+                            <div class="service-info">
+                                📍 {{ product.service_location|replace('_', ' ')|title }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if not product.delivery_required %}
+                            <div class="delivery-info">
+                                🚫 No delivery needed
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="product-actions">
+                            <button class="btn-icon" onclick="editProduct('{{ product.id }}')" title="Edit">
+                                ✏️
+                            </button>
+                            <button class="btn-icon btn-toggle" 
+                                    onclick="toggleAvailability('{{ product.id }}', {{ 'false' if product.is_available else 'true' }})" 
+                                    title="{{ 'Mark Unavailable' if product.is_available else 'Mark Available' }}">
+                                {{ '👁️' if product.is_available else '🚫' }}
+                            </button>
+                            <button class="btn-icon btn-delete" onclick="deleteProduct('{{ product.id }}')" title="Delete">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">📦</div>
+                        <p class="empty-title">No products or services yet</p>
+                        <p class="empty-text">Add your first product or service to get started</p>
+                        <button class="btn btn-add" onclick="showAddModal()">+ Add Your First Item</button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Product/Service</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <form id="productForm" onsubmit="saveProduct(event)">
+                <input type="hidden" id="productId" value="">
+                
+                <div class="form-group">
+                    <label>Type</label>
+                    <div class="type-selector">
+                        <label class="radio-option">
+                            <input type="radio" name="type" value="PRODUCT" checked onchange="updateFormFields()">
+                            <span>📦 Product</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="type" value="SERVICE" onchange="updateFormFields()">
+                            <span>🧹 Service</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="productName" class="form-input" placeholder="e.g. Handmade Soap, Vacuum Cleaning" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="productDescription" class="form-textarea" rows="3" placeholder="Describe your product or service..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Price (KES) *</label>
+                    <input type="number" id="productPrice" class="form-input" placeholder="0" min="0" required>
+                </div>
+                
+                <!-- Service-specific fields -->
+                <div id="serviceFields" style="display: none;">
+                    <div class="form-group">
+                        <label>Service Location</label>
+                        <select id="serviceLocation" class="form-select">
+                            <option value="CUSTOMER">At Customer's Location</option>
+                            <option value="MERCHANT">At My Location</option>
+                            <option value="BOTH">Both Locations</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Product-specific fields -->
+                <div id="productFields">
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="deliveryRequired" checked>
+                            <span>Delivery required</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Image URL (Optional)</label>
+                    <input type="url" id="productImage" class="form-input" placeholder="https://example.com/image.jpg">
+                    <span class="form-help">Paste a link to your product image</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="isAvailable" checked>
+                        <span>Currently available</span>
+                    </label>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-save">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification"></div>
+
+    <script src="/static/js/directory/merchant/products.js"></script>
+</body>
+</html>
