@@ -4,230 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ merchant.business_name }} - Dashboard</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(
-        135deg,
-        #f6f9ff,
-        #e9f0ff
-      );
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        .status-section {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        h2 {
-            font-size: 18px;
-            margin-bottom: 15px;
-        }
-
-        .status-controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .status-card {
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-            border: 2px solid #e0e0e0;
-        }
-
-        .status-label {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 8px;
-        }
-
-        .status-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-open {
-            background: #10b981;
-            color: white;
-        }
-
-        .btn-closed {
-            background: #ef4444;
-            color: white;
-        }
-
-        .btn-in-stock {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .btn-out-stock {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .btn.active {
-            opacity: 1;
-            transform: scale(1.05);
-        }
-
-        .btn:not(.active) {
-            opacity: 0.5;
-        }
-
-        .btn:hover {
-            opacity: 1;
-        }
-
-        .current-status {
-            background: #f0fdf4;
-            border: 2px solid #10b981;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-
-        .current-status.closed {
-            background: #fef2f2;
-            border-color: #ef4444;
-        }
-
-        .status-text {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .orders-section {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .order-list {
-            margin-top: 15px;
-        }
-
-        .order-item {
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 4px solid #3b82f6;
-        }
-
-        .order-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .order-id {
-            font-size: 14px;
-            color: #666;
-        }
-
-        .order-status {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .order-status.pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .order-status.confirmed {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: none;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .status-controls {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/directory/merchant/dashboard.css">
 </head>
 <body>
     <div class="container">
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <a href="/directory/merchant/dashboard" class="nav-tab active">Dashboard</a>
+            <a href="/directory/merchant/products" class="nav-tab">Products</a>
+            <a href="/directory/merchant/orders" class="nav-tab">Orders</a>
+            <a href="/directory/merchant/settings" class="nav-tab">Settings</a>
+        </nav>
+
         <!-- Header -->
         <div class="header">
-            <h1>{{ merchant.business_name }}</h1>
-            <p style="color: #666;">{{ merchant.owner_name }} • {{ merchant.category|capitalize }}</p>
+            <div>
+                <h1>{{ merchant.business_name }}</h1>
+                <p class="subtitle">{{ merchant.owner_name }} • {{ merchant.category|capitalize }}</p>
+            </div>
+            <div class="header-actions">
+                <span class="merchant-id">ID: {{ merchant.id[:8] }}</span>
+            </div>
         </div>
 
         <!-- Status Controls -->
@@ -241,13 +38,15 @@
                     <div class="status-buttons">
                         <button 
                             class="btn btn-open {% if merchant.status == 'OPEN' %}active{% endif %}" 
-                            onclick="updateStatus('status', 'OPEN')"
+                            data-field="status" 
+                            data-value="OPEN"
                         >
                             ✅ OPEN
                         </button>
                         <button 
                             class="btn btn-closed {% if merchant.status == 'CLOSED' %}active{% endif %}" 
-                            onclick="updateStatus('status', 'CLOSED')"
+                            data-field="status" 
+                            data-value="CLOSED"
                         >
                             ❌ CLOSED
                         </button>
@@ -260,13 +59,15 @@
                     <div class="status-buttons">
                         <button 
                             class="btn btn-in-stock {% if merchant.stock_status == 'IN_STOCK' %}active{% endif %}" 
-                            onclick="updateStatus('stock_status', 'IN_STOCK')"
+                            data-field="stock_status" 
+                            data-value="IN_STOCK"
                         >
                             📦 IN STOCK
                         </button>
                         <button 
                             class="btn btn-out-stock {% if merchant.stock_status == 'OUT_OF_STOCK' %}active{% endif %}" 
-                            onclick="updateStatus('stock_status', 'OUT_OF_STOCK')"
+                            data-field="stock_status" 
+                            data-value="OUT_OF_STOCK"
                         >
                             🚫 OUT OF STOCK
                         </button>
@@ -279,7 +80,7 @@
                 <div class="status-text">
                     Current: {{ merchant.status }} • {{ merchant.stock_status }}
                 </div>
-                <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                <p class="status-help">
                     {% if merchant.status == 'OPEN' and merchant.stock_status == 'IN_STOCK' %}
                         ✅ Your business is discoverable by customers via Logic
                     {% else %}
@@ -289,13 +90,32 @@
             </div>
         </div>
 
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ orders|length }}</div>
+                <div class="stat-label">Total Orders</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ merchant.rating or 0 }}</div>
+                <div class="stat-label">Rating</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ products_count or 0 }}</div>
+                <div class="stat-label">Products</div>
+            </div>
+        </div>
+
         <!-- Recent Orders -->
         <div class="orders-section">
-            <h2>Recent Orders</h2>
+            <div class="section-header">
+                <h2>Recent Orders</h2>
+                <a href="/directory/merchant/orders" class="view-all">View All →</a>
+            </div>
             
             <div class="order-list">
                 {% if orders %}
-                    {% for order in orders %}
+                    {% for order in orders[:5] %}
                     <div class="order-item">
                         <div class="order-header">
                             <span class="order-id">Order #{{ order.id[:8] }}</span>
@@ -303,15 +123,16 @@
                                 {{ order.status }}
                             </span>
                         </div>
-                        <div style="font-size: 14px; color: #666;">
+                        <div class="order-details">
                             {{ order.created_at }} • KES {{ order.total_amount or 0 }}
                         </div>
                     </div>
                     {% endfor %}
                 {% else %}
                     <div class="empty-state">
-                        <p>No orders yet</p>
-                        <p style="font-size: 14px;">Orders will appear here once customers start ordering</p>
+                        <div class="empty-icon">📦</div>
+                        <p class="empty-title">No orders yet</p>
+                        <p class="empty-text">Orders will appear here once customers start ordering</p>
                     </div>
                 {% endif %}
             </div>
@@ -321,61 +142,6 @@
     <!-- Notification Toast -->
     <div id="notification" class="notification"></div>
 
-    <script>
-        async function updateStatus(field, value) {
-            try {
-                const response = await fetch('/directory/merchant/update-status', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        [field]: value
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showNotification('✅ Status updated successfully!');
-                    
-                    // Update button states
-                    document.querySelectorAll('.btn').forEach(btn => {
-                        btn.classList.remove('active');
-                    });
-                    event.target.classList.add('active');
-                    
-                    // Reload page after 1 second to show updated status
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showNotification('❌ Update failed: ' + data.error, 'error');
-                }
-            } catch (error) {
-                console.error('Update error:', error);
-                showNotification('❌ Network error', 'error');
-            }
-        }
-
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.style.display = 'block';
-            
-            if (type === 'error') {
-                notification.style.background = '#ef4444';
-            } else {
-                notification.style.background = '#10b981';
-            }
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
-
-        // Auto-refresh status every 30 seconds
-        setInterval(() => {
-            // Optional: fetch latest status without full page reload
-        }, 30000);
-    </script>
+    <script src="/static/js/directory/merchant/dashboard.js"></script>
 </body>
 </html>
