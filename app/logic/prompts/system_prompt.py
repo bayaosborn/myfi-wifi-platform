@@ -1,14 +1,17 @@
 """
-System Prompt Builder
+System Prompt Builder - REFACTORED
 app/logic/prompts/system_prompt.py
 
-Minimal, focused prompt to reduce token usage
-Now includes INTENT DETECTION for directory queries
+Separated prompts for different intents
+Each prompt is focused and minimal
 """
 
-def build_system_prompt(contacts_json: str, user_message: str, memory_context: str = "") -> str:
+from app.logic.core.helpers import get_current_date, get_current_time
+
+
+def build_contact_action_prompt(contacts_json: str, user_message: str, memory_context: str = "") -> str:
     """
-    Build minimal system prompt for Logic
+    Build prompt for contact actions (call/message/email)
     
     Args:
         contacts_json: User's contacts as JSON
@@ -16,15 +19,12 @@ def build_system_prompt(contacts_json: str, user_message: str, memory_context: s
         memory_context: Recent conversation context
     
     Returns:
-        System prompt string (~2500 tokens)
+        System prompt for contact actions
     """
-    
-    from app.logic.core.helpers import get_current_date, get_current_time
     
     current_date = get_current_date()
     current_time = get_current_time()
     
-    # Memory section (if exists)
     memory_section = ""
     if memory_context:
         memory_section = f"\n{memory_context}\n"
@@ -89,100 +89,139 @@ User message: {user_message}
 RESPOND WITH JSON ONLY."""
 
 
-def build_directory_prompt(user_message: str) -> str:
+def build_merchant_response_prompt(user_message: str, merchants_data: str, memory_context: str = "") -> str:
     """
-    Build prompt for directory/merchant queries
-    Uses INTENT DETECTION instead of keywords
+    Build prompt for merchant search responses
+    
+    Logic formats merchant search results (does not search)
     
     Args:
-        user_message: User's natural language message
+        user_message: User's search query
+        merchants_data: JSON of merchants + products from database
+        memory_context: Recent conversation context
     
     Returns:
-        System prompt for directory intent detection
+        System prompt for merchant response formatting
     """
-    
-    from app.logic.core.helpers import get_current_date, get_current_time
     
     current_date = get_current_date()
     current_time = get_current_time()
     
+    memory_section = ""
+    if memory_context:
+        memory_section = f"\n{memory_context}\n"
+    
     return f"""You are Logic, an AI assistant helping users find products and services.
 
-TASK: Extract the user's intent and search keywords from their message.
+TASK: Present merchant search results to the user.
 
-RESPONSE FORMAT: Return ONLY valid JSON.
+MERCHANTS FOUND (from database):
+{merchants_data}
+{memory_section}
 
-{{
-    "intent": "discover_product|discover_service|order|undeterministic",
-    "keywords": ["word1", "word2"],
-    "response": "What I understood"
-}}
+USER QUERY: {user_message}
 
-INTENT TYPES:
+YOUR TASK:
+1. Present the merchants found
+2. Highlight relevant products with prices
+3. Mention what makes each merchant unique
+4. Ask if they want to order or see more details
 
-1. discover_product - User wants to find a physical product
-   Examples: "I want boots", "Need soap", "Looking for gas cylinder"
-   
-2. discover_service - User wants to find a service
-   Examples: "Vacuum cleaning", "House cleaning", "Laundry service"
-   
-3. order - User wants to purchase something specific
-   Examples: "Order 6kg gas", "Buy CR7 boots", "Get me Jik"
-   
-4. undeterministic - User intent is unclear
-   Examples: "I want something", "Need a gift", "Looking for stuff"
-
-KEYWORD EXTRACTION:
-
-Extract ONLY the product/service terms, NOT action words.
-
-Good keywords:
-- "boots", "gas", "jik", "soap", "vacuum", "cleaning"
-
-Bad keywords (ignore these):
-- "find", "show", "get", "order", "buy", "want", "need"
-
-EXAMPLES:
-
-User: "I want CR7 boots"
-→ {{"intent": "discover_product", "keywords": ["cr7", "boots"], "response": "Looking for CR7 boots..."}}
-
-User: "Need gas refill"
-→ {{"intent": "discover_product", "keywords": ["gas", "refill"], "response": "Searching for gas refill services..."}}
-
-User: "Nataka kununua sabuni" (Swahili: I want to buy soap)
-→ {{"intent": "discover_product", "keywords": ["sabuni", "soap"], "response": "Searching for soap..."}}
-
-User: "Vacuum cleaning yangu"
-→ {{"intent": "discover_service", "keywords": ["vacuum", "cleaning"], "response": "Looking for vacuum cleaning services..."}}
-
-User: "I want to buy something for my friend"
-→ {{"intent": "undeterministic", "keywords": [], "response": "What would you like to buy? I can help you find products or services."}}
-
-User: "Show me what's available"
-→ {{"intent": "undeterministic", "keywords": [], "response": "I can help you find products or services. What are you looking for?"}}
-
-SWAHILI/SHENG SUPPORT:
-Recognize Kenyan terms:
-- "sabuni" = soap
-- "gesi" = gas
-- "chakula" = food
-- "nguo" = clothes
-- "viatu" = shoes/boots
-- "kununua" = buy
-- "nataka" = I want
-- "nipatieni" = get me
+RESPONSE FORMAT: Natural language (NOT JSON)
 
 CRITICAL RULES:
-- ALWAYS extract keywords (even from vague messages)
-- If truly undeterministic, ask user to clarify
-- Support both English and Swahili/Sheng
-- Return ONLY JSON
+- ONLY mention merchants in the data above
+- ONLY mention products listed above with exact prices
+- NEVER invent prices or products not in the data
+- If asked about products not in the list, say "That product is not available from this merchant"
+- Be conversational and helpful
+- Suggest ordering if user seems interested
+
+EXAMPLE RESPONSE:
+
+"I found Mbauda Stores! They sell:
+
+• CR7 Boots - KES 3,500
+• Nike Sneakers - KES 4,200
+• Adidas Trainers - KES 3,800
+
+All boots are in stock. Would you like to order the CR7 boots?"
 
 CURRENT CONTEXT:
 - Date: {current_date}
 - Time: {current_time}
 
-User message: {user_message}
+Respond naturally and helpfully."""
 
-RESPOND WITH JSON ONLY."""
+
+def build_order_confirmation_prompt(user_message: str, order_details: dict, memory_context: str = "") -> str:
+    """
+    Build prompt for order confirmation
+    
+    Args:
+        user_message: User's order request
+        order_details: Extracted order details
+        memory_context: Recent conversation context
+    
+    Returns:
+        System prompt for order confirmation
+    """
+    
+    current_date = get_current_date()
+    current_time = get_current_time()
+    
+    memory_section = ""
+    if memory_context:
+        memory_section = f"\n{memory_context}\n"
+    
+    return f"""You are Logic, an AI assistant helping users place orders.
+
+TASK: Confirm order details with the user before processing.
+
+ORDER DETAILS:
+{order_details}
+{memory_section}
+
+USER MESSAGE: {user_message}
+
+YOUR TASK:
+1. Summarize what they want to order
+2. Show the total price
+3. Ask for confirmation
+4. If details are missing, ask for them
+
+RESPONSE FORMAT: Natural language (NOT JSON)
+
+EXAMPLE RESPONSE:
+
+"Great! Let me confirm your order:
+
+📦 Order Summary:
+• 1x 6kg Gas Cylinder - KES 1,200
+
+💰 Total: KES 1,200
+
+📍 Delivery: [Ask if not provided]
+
+Should I place this order for you?"
+
+CURRENT CONTEXT:
+- Date: {current_date}
+- Time: {current_time}
+
+Respond naturally and helpfully."""
+
+
+# Legacy function (kept for backward compatibility)
+def build_system_prompt(contacts_json: str, user_message: str, memory_context: str = "", directory_skill: str = "", merchant_discovery: str = "") -> str:
+    """
+    Legacy system prompt builder
+    
+    Use specific prompt builders instead:
+    - build_contact_action_prompt()
+    - build_merchant_response_prompt()
+    - build_order_confirmation_prompt()
+    """
+    
+    # Default to contact action prompt
+    return build_contact_action_prompt(contacts_json, user_message, memory_context)
